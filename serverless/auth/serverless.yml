@@ -17,10 +17,13 @@ functions:
     events:
       - http:
           path: /
-          method: POST
+          method: POST	
+    layers:
+      - Ref: PythonRequirementsLambdaLayer
 
 plugins:
   - serverless-domain-manager
+  - serverless-python-requirements
 
 custom:
   customDomain:
@@ -30,4 +33,8 @@ custom:
     createRoute53Record: true
     endpointType: EDGE
     securityPolicy: tls_1_2
-    apiType: rest
+    apiType: rest	
+  pythonRequirements:
+    zip: true
+    layer: true
+    usePipenv: false
