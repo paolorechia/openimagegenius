@@ -1,0 +1,33 @@
+service: openimagegenius-auth
+frameworkVersion: '3'
+
+package:
+  patterns:
+    - '!node_modules/**'
+
+provider:
+  name: aws
+  runtime: python3.8
+  stage: ${opt:stage}
+  region: eu-central-1
+
+functions:
+  redirect:
+    handler: handler.hello
+    events:
+      - http:
+          path: /
+          method: POST
+
+plugins:
+  - serverless-domain-manager
+
+custom:
+  customDomain:
+    domainName: ${self:provider.stage}.api.openimagegenius.com
+    basePath: redirect
+    stage: ${self:provider.stage}
+    createRoute53Record: true
+    endpointType: EDGE
+    securityPolicy: tls_1_2
+    apiType: rest
