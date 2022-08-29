@@ -29,7 +29,8 @@ provider:
 
 functions:
   redirect:
-    handler: handler.hello
+    reservedConcurrency: 5
+    handler: handler.redirect
     events:
       - http:
           path: /
@@ -41,6 +42,30 @@ functions:
       GOOGLE_USER_ID_INDEX_NAME: ${self:custom.googleUserIdIndexName}
       USER_GOOGLE_EMAIL_INDEX_NAME: ${self:custom.userGoogleEmailIndexName}
       GOOGLE_OAUTH_APP_ID: ${self:custom.googleOAuthAppID}
+
+  authorizer:
+    reservedConcurrency: 10
+    handler: handler.authorizer
+    layers:
+      - Ref: PythonRequirementsLambdaLayer
+    environment:
+      USER_TABLE_NAME: ${self:custom.userTableName}
+      GOOGLE_USER_ID_INDEX_NAME: ${self:custom.googleUserIdIndexName}
+      USER_GOOGLE_EMAIL_INDEX_NAME: ${self:custom.userGoogleEmailIndexName}
+      GOOGLE_OAUTH_APP_ID: ${self:custom.googleOAuthAppID}
+
+  testAuthorizer:
+    reservedConcurrency: 1
+    handler: handler.test_authorizer
+    events:
+      - http:
+          path: /test-authorizer
+          method: GET
+          authorizer:
+            name: authorizer
+            resultTtlInSeconds: 0
+            identitySource: method.request.header.Authorization
+            type: token
 
 plugins:
   - serverless-domain-manager
@@ -96,3 +121,9 @@ resources:
                 KeyType: HASH
             Projection:
               ProjectionType: ALL
+  Outputs:
+    AuthorizerLambdaFunction:
+      Export:
+        Name: authorizer-${self:provider.stage}-arn
+      Value:
+        Fn::GetAtt: AuthorizerLambdaFunction.Arn
