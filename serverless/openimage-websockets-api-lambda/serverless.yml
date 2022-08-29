@@ -1,0 +1,84 @@
+service: openimagegenius-websockets-api
+frameworkVersion: "3"
+
+package:
+  patterns:
+    - "!node_modules/**"
+    - "!auth-sls"
+    - "!.serverless"
+    - "!.gitignore"
+    - "!package.json"
+    - "!package-lock.json"
+
+provider:
+  name: aws
+  runtime: python3.8
+  stage: ${opt:stage}
+  region: eu-central-1
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - "dynamodb:PutItem"
+            - "dynamodb:GetItem"
+            - "dynamodb:Query"
+          Resource:
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.userTableName}"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.userTableName}/index/*"
+
+functions:
+  redirect:
+    handler: redirect.handler
+    events:
+      - http:
+          path: /
+          method: POST
+    layers:
+      - Ref: PythonRequirementsLambdaLayer
+    environment:
+      USER_TABLE_NAME: ${self:custom.userTableName}
+      GOOGLE_USER_ID_INDEX_NAME: ${self:custom.googleUserIdIndexName}
+      USER_GOOGLE_EMAIL_INDEX_NAME: ${self:custom.userGoogleEmailIndexName}
+      GOOGLE_OAUTH_APP_ID: ${self:custom.googleOAuthAppID}
+
+  authorizer:
+    handler: authorizer.handler
+    layers:
+      - Ref: PythonRequirementsLambdaLayer
+    environment:
+      GOOGLE_OAUTH_APP_ID: ${self:custom.googleOAuthAppID}
+      AUTHORIZER_STAGE: ${self:provider.stage}
+
+  testAuthorizer:
+    handler: test_authorizer.handler
+    events:
+      - http:
+          path: /test-authorizer
+          method: GET
+          authorizer:
+            name: authorizer
+            resultTtlInSeconds: 0
+            identitySource: method.request.header.Authorization
+            type: token
+
+plugins:
+  - serverless-domain-manager
+  - serverless-python-requirements
+
+custom:
+  customDomain:
+    domainName: ${self:provider.stage}.api.openimagegenius.com
+    basePath: /ws
+    stage: ${self:provider.stage}
+    createRoute53Record: true
+    endpointType: EDGE
+    securityPolicy: tls_1_2
+    apiType: rest
+  pythonRequirements:
+    zip: true
+    layer: true
+    usePipenv: false
+  userTableName: ${self:provider.stage}-users-table
+  googleUserIdIndexName: ${self:provider.stage}-google-id-index
+  userGoogleEmailIndexName: ${self:provider.stage}-user-google-email
