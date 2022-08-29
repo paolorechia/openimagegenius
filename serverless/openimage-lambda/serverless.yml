@@ -51,7 +51,7 @@ functions:
       AUTHORIZER_STAGE: ${self:provider.stage}
 
   testAuthorizer:
-    handler: test_authorizer.test_authorizer
+    handler: test_authorizer.handler
     events:
       - http:
           path: /test-authorizer
