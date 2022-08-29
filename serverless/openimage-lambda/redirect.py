@@ -21,7 +21,7 @@ google_user_id_index_name = os.environ["GOOGLE_USER_ID_INDEX_NAME"]
 user_google_email_index_name = os.environ["USER_GOOGLE_EMAIL_INDEX_NAME"]
 
 
-def hello(event, context):
+def handler(event, context):
     logger.info("Event: %s", event)
     try:
         body = event["body"]

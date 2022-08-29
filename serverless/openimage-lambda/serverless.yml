@@ -29,8 +29,7 @@ provider:
 
 functions:
   redirect:
-    reservedConcurrency: 5
-    handler: handler.redirect
+    handler: redirect.handler
     events:
       - http:
           path: /
@@ -44,19 +43,15 @@ functions:
       GOOGLE_OAUTH_APP_ID: ${self:custom.googleOAuthAppID}
 
   authorizer:
-    reservedConcurrency: 10
-    handler: handler.authorizer
+    handler: authorizer.handler
     layers:
       - Ref: PythonRequirementsLambdaLayer
     environment:
-      USER_TABLE_NAME: ${self:custom.userTableName}
-      GOOGLE_USER_ID_INDEX_NAME: ${self:custom.googleUserIdIndexName}
-      USER_GOOGLE_EMAIL_INDEX_NAME: ${self:custom.userGoogleEmailIndexName}
       GOOGLE_OAUTH_APP_ID: ${self:custom.googleOAuthAppID}
+      AUTHORIZER_STAGE: ${self:provider.stage}
 
   testAuthorizer:
-    reservedConcurrency: 1
-    handler: handler.test_authorizer
+    handler: test_authorizer.test_authorizer
     events:
       - http:
           path: /test-authorizer
