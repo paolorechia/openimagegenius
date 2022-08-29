@@ -68,7 +68,7 @@ def handler(event, context):
     id_info = id_token.verify_oauth2_token(
         token, request, client_id)
 
-    logger.info("Success!")
+    logger.info("Token is valid.")
     logger.info("Id info: %s", id_info)
     google_user_id = id_info['sub']
     user_google_email = id_info["email"]
@@ -99,9 +99,9 @@ def handler(event, context):
     else:
         logger.info("User not found, new user should be created :)")
         unique_user_id = str(uuid4())
-        clashed_user = "Temporary"
+        clashed_users = ["TemporarySentinel"]
         attempts = 0
-        while clashed_user and attempts <= 3:
+        while clashed_users and attempts <= 3:
             response = dynamo_db_client.get_item(
                 TableName=user_table_name,
                 Key={
@@ -110,8 +110,9 @@ def handler(event, context):
                     }
                 }
             )
-            clashed_user = response["Item"]
-            if clashed_user:
+            logger.info("Response: %s", response)
+            clashed_users = response["Items"]
+            if clashed_users:
                 unique_user_id = str(uuid4())
                 attempts += 1
 
