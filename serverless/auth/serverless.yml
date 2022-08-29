@@ -6,17 +6,26 @@ package:
     - "!node_modules/**"
     - "!auth-sls"
     - "!.serverless"
-    - "!.requirements.zip"
     - "!.gitignore"
     - "!package.json"
     - "!package-lock.json"
-    - "!requirements.txt"
 
 provider:
   name: aws
   runtime: python3.8
   stage: ${opt:stage}
   region: eu-central-1
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - "dynamodb:PutItem"
+            - "dynamodb:GetItem"
+            - "dynamodb:Query"
+          Resource:
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.userTableName}"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.userTableName}/index/*"
 
 functions:
   redirect:
@@ -27,6 +36,11 @@ functions:
           method: POST
     layers:
       - Ref: PythonRequirementsLambdaLayer
+    environment:
+      USER_TABLE_NAME: ${self:custom.userTableName}
+      GOOGLE_USER_ID_INDEX_NAME: ${self:custom.googleUserIdIndexName}
+      USER_GOOGLE_EMAIL_INDEX_NAME: ${self:custom.userGoogleEmailIndexName}
+      GOOGLE_OAUTH_APP_ID: ${self:custom.googleOAuthAppID}
 
 plugins:
   - serverless-domain-manager
@@ -45,7 +59,12 @@ custom:
     zip: true
     layer: true
     usePipenv: false
+  OAuthAppIDMapping:
+    dev: ${ssm:/dev/google-oauth-app-id}
+  googleOAuthAppID: ${self:custom.OAuthAppIDMapping.${self:provider.stage}}
   userTableName: ${self:provider.stage}-users-table
+  googleUserIdIndexName: ${self:provider.stage}-google-id-index
+  userGoogleEmailIndexName: ${self:provider.stage}-user-google-email
 
 resources:
   Resources:
@@ -65,13 +84,13 @@ resources:
           - AttributeName: unique_user_id
             KeyType: HASH
         GlobalSecondaryIndexes:
-          - IndexName: ${self:provider.stage}-google-id-index
+          - IndexName: ${self:custom.googleUserIdIndexName}
             KeySchema:
               - AttributeName: google_user_id
                 KeyType: HASH
             Projection:
               ProjectionType: ALL
-          - IndexName: ${self:provider.stage}-user-google-email
+          - IndexName: ${self:custom.userGoogleEmailIndexName}
             KeySchema:
               - AttributeName: user_google_email
                 KeyType: HASH
