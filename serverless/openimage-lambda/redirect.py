@@ -1,3 +1,4 @@
+import html
 import json
 import logging
 import os
@@ -19,6 +20,32 @@ dynamo_db_client = boto3.client("dynamodb")
 user_table_name = os.environ["USER_TABLE_NAME"]
 google_user_id_index_name = os.environ["GOOGLE_USER_ID_INDEX_NAME"]
 user_google_email_index_name = os.environ["USER_GOOGLE_EMAIL_INDEX_NAME"]
+
+html_success_page = """
+<html>
+    <head>
+        <title>openimagegenius</title>
+    </head>
+    <body>
+        <h2> Authentication Successful, Redirecting... </h2>
+        <script>
+            location.assign("https://{}.app.openimagegenius.com")
+        </script>
+    </body>
+</html>
+"""
+
+html_failure_page = """
+<html>
+    <head>
+        <title>openimagegenius</title>
+    </head>
+    <body>
+        <h2> Authentication Failed, Redirecting... </h2>
+        <h3> Error: {} </h3>
+    </body>
+</html>
+"""
 
 
 def handler(event, context):
@@ -59,7 +86,13 @@ def handler(event, context):
     existing_users = response["Items"]
     if len(existing_users) > 1:
         logger.info("Multiple users found, something went wrong :(")
-        return {"statusCode": 409, "body": "Multiple users found, conflict. Please contact support for help"}
+        return {
+            "statusCode": 409,
+            "body": html_failure_page.format("Multiple users found, conflict. Please contact support for help"),
+            "headers": {
+                "Content-Type": "text/html"
+            }
+        }
     elif len(existing_users) == 1:
         logger.info("User found :)")
         unique_user_id = existing_users[0]["unique_user_id"]["S"]
@@ -83,7 +116,13 @@ def handler(event, context):
                 attempts += 1
 
         if attempts > 3:
-            return {"statusCode": 503, "body": "Could not process your request at this time, please try again later."}
+            return {
+                "statusCode": 503,
+                "body": html_failure_page.format("Could not process your request at this time, please try again later."),
+                "headers": {
+                    "Content-Type": "text/html"
+                }
+            }
 
         logger.info("Creating new user :)")
         dynamo_db_client.put_item(
@@ -102,5 +141,11 @@ def handler(event, context):
         "user_email": user_google_email
     }
     logger.info("Successful, authenticated user: %s", str(body))
-    response = {"statusCode": 200, "body": json.dumps(body)}
+    response = {
+        "statusCode": 200,
+        "body": html_success_page.format(stage),
+        "headers": {
+            "Set-Cookie": f"token={token}; Domain=openimagegenius.com",
+            "Content-Type": "text/html"
+        }}
     return response

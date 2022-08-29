@@ -3,7 +3,7 @@ service: openimagegenius-frontend
 plugins:
   - serverless-s3-sync
 
-frameworkVersion: '3'
+frameworkVersion: "3"
 
 provider:
   name: aws
@@ -13,7 +13,8 @@ provider:
 
 custom:
   bucketName: ${self:provider.stage}.auth.openimagegenius.com
-  s3Sync: 
+  webAppBucketName: ${self:provider.stage}.app.openimagegenius.com
+  s3Sync:
     # An example of possible configuration options
     - bucketName: ${self:custom.bucketName}
       localDir: ./website
@@ -22,9 +23,22 @@ custom:
       defaultContentType: text/html # optional
       params: # optional
         - index.html:
-            CacheControl: 'no-cache'
+            CacheControl: "no-cache"
         - "*.js":
-            CacheControl: 'public, max-age=31536000'
+            CacheControl: "public, max-age=31536000"
+      bucketTags:
+        stage: ${self:provider.stage}
+
+    - bucketName: ${self:custom.webAppBucketName}
+      localDir: ./web-app/build
+      deleteRemoved: true # optional, indicates whether sync deletes files no longer present in localDir. Defaults to 'true'
+      followSymlinks: true # optional
+      defaultContentType: text/html # optional
+      params: # optional
+        - index.html:
+            CacheControl: "no-cache"
+        - "*.js":
+            CacheControl: "public, max-age=31536000"
       bucketTags:
         stage: ${self:provider.stage}
 
@@ -34,5 +48,12 @@ resources:
       Type: AWS::S3::Bucket
       Properties:
         BucketName: ${self:custom.bucketName}
+        WebsiteConfiguration:
+          IndexDocument: index.html
+
+    WebAppBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.webAppBucketName}
         WebsiteConfiguration:
           IndexDocument: index.html
