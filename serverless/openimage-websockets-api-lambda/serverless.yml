@@ -9,12 +9,16 @@ package:
     - "!.gitignore"
     - "!package.json"
     - "!package-lock.json"
+    - "!test_requirements.txt"
 
 provider:
   name: aws
   runtime: python3.8
   stage: ${opt:stage}
   region: eu-central-1
+  websocketsApiName: openimage-websockets-api-${self:provider.stage}
+  websocketsApiRouteSelectionExpression: $request.body.action # custom routes are selected by the value of the action property in the body
+  websocketsDescription: Serverless Websockets for Using Facing API	
   iam:
     role:
       statements:
@@ -28,39 +32,21 @@ provider:
             - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.userTableName}/index/*"
 
 functions:
-  redirect:
-    handler: redirect.handler
+  connectHandler:
+    handler: event_handlers.connect
     events:
-      - http:
-          path: /
-          method: POST
-    layers:
-      - Ref: PythonRequirementsLambdaLayer
-    environment:
-      USER_TABLE_NAME: ${self:custom.userTableName}
-      GOOGLE_USER_ID_INDEX_NAME: ${self:custom.googleUserIdIndexName}
-      USER_GOOGLE_EMAIL_INDEX_NAME: ${self:custom.userGoogleEmailIndexName}
-      GOOGLE_OAUTH_APP_ID: ${self:custom.googleOAuthAppID}
-
-  authorizer:
-    handler: authorizer.handler
-    layers:
-      - Ref: PythonRequirementsLambdaLayer
-    environment:
-      GOOGLE_OAUTH_APP_ID: ${self:custom.googleOAuthAppID}
-      AUTHORIZER_STAGE: ${self:provider.stage}
-
-  testAuthorizer:
-    handler: test_authorizer.handler
+      - websocket: $connect
+		
+  defaultHandler:
+    handler: event_handlers.default
     events:
-      - http:
-          path: /test-authorizer
-          method: GET
-          authorizer:
-            name: authorizer
-            resultTtlInSeconds: 0
-            identitySource: method.request.header.Authorization
-            type: token
+      - websocket: $default #simple event definition without extra route property
+	
+  customFooHandler:
+    handler: event_handlers.foo
+    events:
+      - websocket:
+          route: foo # will trigger if $request.body.action === "foo"
 
 plugins:
   - serverless-domain-manager
@@ -68,13 +54,12 @@ plugins:
 
 custom:
   customDomain:
-    domainName: ${self:provider.stage}.api.openimagegenius.com
-    basePath: /ws
+    domainName: ${self:provider.stage}.ws-api.openimagegenius.com
     stage: ${self:provider.stage}
     createRoute53Record: true
-    endpointType: EDGE
+    endpointType: REGIONAL
     securityPolicy: tls_1_2
-    apiType: rest
+    apiType: websocket
   pythonRequirements:
     zip: true
     layer: true
