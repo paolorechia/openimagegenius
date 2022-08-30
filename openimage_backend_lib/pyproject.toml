@@ -21,6 +21,9 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
+dependencies = [
+  "pydantic == 1.10.0"
+]
 
 [project.urls]
 "Homepage" = "https://github.com/pypa/sampleproject"

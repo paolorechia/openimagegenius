@@ -1,4 +1,4 @@
-
+from request_handler import request_handler
 
 def connection(event, context):
     print("Event", event)
@@ -11,6 +11,4 @@ def default(event, context):
     return {"statusCode": 200, "body": "Default"}
 
 def request(event, context):
-    print("Event", event)
-    print("contex", context)
-    return {"statusCode": 200, "body": "Request Received"}
+    return request_handler(event, context)

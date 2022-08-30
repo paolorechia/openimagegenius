@@ -56,14 +56,15 @@ functions:
       - websocket:
           route: request
           routeResponseSelectionExpression: $default
-
-
+    enviromnet:
+      SQS_REQUEST_URL: ${self:custom.imageProcessingQueueUrl}
 plugins:
   - serverless-domain-manager
   - serverless-python-requirements
 
 custom:
   authorizerArn: ${cf:openimagegenius-auth-dev.AuthorizerLambdaFunction}
+  imageProcessingQueueUrl: !Ref ImageProcessingQueue
   customDomain:
     domainName: ${self:provider.stage}.ws-api.openimagegenius.com
     stage: ${self:provider.stage}
@@ -79,3 +80,30 @@ custom:
       - --no-index
       - --find-links ./manual_dist
   databaseInfo: ${file(../../database/serverless.yml):custom}
+
+resources:
+  Resources:
+    ImageProcessingQueueDLQ:
+      Type: AWS::SQS::Queue
+      Properties: 
+        ContentBasedDeduplication: false
+        DelaySeconds: 0
+        FifoQueue: true
+        QueueName: image-processing-dead-letter-queue-${self:provider.stage}.fifo
+        Tags: 
+          - Tag
+        VisibilityTimeout: 30
+
+    ImageProcessingQueue:
+      Type: AWS::SQS::Queue
+      Properties: 
+        ContentBasedDeduplication: false
+        DelaySeconds: 0
+        FifoQueue: true
+        QueueName: image-processing-${self:provider.stage}.fifo
+        RedrivePolicy:
+          deadLetterTargetArn: !GetAtt ImageProcessingQueueDLR.Arn
+          maxReceiveCount: 3
+        Tags: 
+          - Tag
+        VisibilityTimeout: 30
