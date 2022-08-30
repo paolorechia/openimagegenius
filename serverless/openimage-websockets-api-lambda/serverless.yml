@@ -5,12 +5,16 @@ package:
   patterns:
     - "!manual_dist"
     - "!node_modules/**"
-    - "!auth-sls"
+    - "!ws-client"
+    - "!ws-server"
+    - "!.ws_secret_pass"
     - "!.serverless"
     - "!.gitignore"
     - "!package.json"
     - "!package-lock.json"
     - "!test_requirements.txt"
+    - "!pytest.ini"
+    - "test_ws_server.py"
 
 provider:
   name: aws
@@ -19,7 +23,14 @@ provider:
   region: eu-central-1
   websocketsApiName: openimage-websockets-api-${self:provider.stage}
   websocketsApiRouteSelectionExpression: $request.body.action # custom routes are selected by the value of the action property in the body
-  websocketsDescription: Serverless Websockets for Using Facing API	
+  websocketsDescription: Serverless Websockets for Using Facing API
+  environment:
+    SQS_REQUEST_URL: ${self:custom.imageProcessingQueueUrl}
+    USER_TABLE_NAME: ${self:custom.databaseInfo.userTableName}
+    REQUEST_TABLE_NAME: ${self:custom.databaseInfo.requestTableName}
+    GOOGLE_USER_ID_INDEX_NAME: ${self:custom.databaseInfo.googleUserIdIndexName}
+    USER_GOOGLE_EMAIL_INDEX_NAME: ${self:custom.databaseInfo.userGoogleEmailIndexName}
+    REQUEST_UNIQUE_USER_ID_INDEX: ${self:custom.databaseInfo.requestUniqueUserIdIndex}
   iam:
     role:
       statements:
@@ -31,6 +42,11 @@ provider:
           Resource:
             - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.databaseInfo.requestTableName}"
             - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.databaseInfo.requestTableName}/index/*"
+        - Effect: Allow
+          Action:
+            - "sqs:SendMessage"
+          Resource:
+            - "arn:aws:sqs:${self:provider.region}:*:queue/${self:custom.imageProcessingQueueName}"
 
 functions:
   connectionHandler:
@@ -40,30 +56,35 @@ functions:
           route: $connect
           authorizer:
             arn: ${self:custom.authorizerArn}
-            resultTtlInSeconds: 0
             identitySource:
               - 'route.request.header.Authorization'
-            type: token
+    layers:
+      - Ref: PythonRequirementsLambdaLayer
+
 
   defaultHandler:
     handler: event_handlers.default
     events:
       - websocket: $default #simple event definition without extra route property
+    layers:
+      - Ref: PythonRequirementsLambdaLayer
 	
   requestHandler:
     handler: event_handlers.request
+    layers:
+      - Ref: PythonRequirementsLambdaLayer
     events:
       - websocket:
           route: request
           routeResponseSelectionExpression: $default
-    enviromnet:
-      SQS_REQUEST_URL: ${self:custom.imageProcessingQueueUrl}
+
 plugins:
   - serverless-domain-manager
   - serverless-python-requirements
 
 custom:
   authorizerArn: ${cf:openimagegenius-auth-dev.AuthorizerLambdaFunction}
+  imageProcessingQueueName: image-processing-${self:provider.stage}.fifo
   imageProcessingQueueUrl: !Ref ImageProcessingQueue
   customDomain:
     domainName: ${self:provider.stage}.ws-api.openimagegenius.com
@@ -90,8 +111,6 @@ resources:
         DelaySeconds: 0
         FifoQueue: true
         QueueName: image-processing-dead-letter-queue-${self:provider.stage}.fifo
-        Tags: 
-          - Tag
         VisibilityTimeout: 30
 
     ImageProcessingQueue:
@@ -100,10 +119,8 @@ resources:
         ContentBasedDeduplication: false
         DelaySeconds: 0
         FifoQueue: true
-        QueueName: image-processing-${self:provider.stage}.fifo
+        QueueName: ${self:custom.imageProcessingQueueName}
         RedrivePolicy:
-          deadLetterTargetArn: !GetAtt ImageProcessingQueueDLR.Arn
+          deadLetterTargetArn: !GetAtt ImageProcessingQueueDLQ.Arn
           maxReceiveCount: 3
-        Tags: 
-          - Tag
         VisibilityTimeout: 30

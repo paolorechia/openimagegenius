@@ -1,23 +1,25 @@
 import json
+import logging
 import os
 from datetime import datetime, timezone
 from uuid import uuid4
 
-import logging
 import boto3
+import pydantic
 import pydash as _
-from openimage_backend_lib import REQUEST_TYPES
+
 from openimage_backend_lib import database_models as models
 from openimage_backend_lib import repository as repo_module
 from pydantic import BaseModel, ValidationError, validator
 
-
 dynamodb_client = boto3.client("dynamodb")
 sqs_client = boto3.client("sqs")
 sqs_queue_url = os.environ["SQS_REQUEST_URL"]
-repository = repo_module.Repository(dynamodb_client)
+environment = repo_module.EnvironmentInfo()
+repository = repo_module.Repository(dynamodb_client, environment)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+
 
 class Request(BaseModel):
     data: str
@@ -31,7 +33,7 @@ class Request(BaseModel):
 
     @validator('request_type')
     def request_type(cls, v):
-        if v.lower() not in REQUEST_TYPES:
+        if v.lower() not in models.REQUEST_TYPES:
             raise ValueError(f"Request type {v} is not recognized.")
 
     @validator('unique_user_id')

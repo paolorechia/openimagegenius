@@ -8,7 +8,7 @@ import logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-class EnviromentInfo:
+class EnvironmentInfo:
     def __init__(self) -> None:
         self.user_table_name = os.environ["USER_TABLE_NAME"]
         self.request_table_name = os.environ["REQUEST_TABLE_NAME"]
@@ -31,7 +31,7 @@ def to_dynamodb_strings(model_dict_instance):
     return to_dynamo
 
 class Repository:
-    def __init__(self, dynamo_client, environment_info: EnviromentInfo):
+    def __init__(self, dynamo_client, environment_info: EnvironmentInfo):
         self.ddb = dynamo_client
         self.environment = environment_info
 
