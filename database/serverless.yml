@@ -1,0 +1,54 @@
+service: openimagegenius-database
+frameworkVersion: "3"
+
+package:
+  patterns:
+    - "!node_modules/**"
+    - "!auth-sls"
+    - "!.serverless"
+    - "!.gitignore"
+    - "!package.json"
+    - "!package-lock.json"
+
+provider:
+  name: aws
+  runtime: python3.8
+  stage: ${opt:stage}
+  region: eu-central-1
+
+custom:
+  userTableName: users-table-${self:provider.stage}
+  googleUserIdIndexName: google-id-index-${self:provider.stage}
+  userGoogleEmailIndexName: user-google-email-index-${self:provider.stage}
+
+resources:
+  Resources:
+    UserTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.userTableName}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: unique_user_id
+            AttributeType: S
+          - AttributeName: google_user_id
+            AttributeType: S
+          - AttributeName: user_google_email
+            AttributeType: S
+        KeySchema:
+          - AttributeName: unique_user_id
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: ${self:custom.googleUserIdIndexName}
+            KeySchema:
+              - AttributeName: google_user_id
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+          - IndexName: ${self:custom.userGoogleEmailIndexName}
+            KeySchema:
+              - AttributeName: user_google_email
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+

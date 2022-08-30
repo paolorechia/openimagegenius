@@ -64,6 +64,28 @@ custom:
     zip: true
     layer: true
     usePipenv: false
-  userTableName: ${self:provider.stage}-users-table
-  googleUserIdIndexName: ${self:provider.stage}-google-id-index
-  userGoogleEmailIndexName: ${self:provider.stage}-user-google-email
+  requestTableName: ${self:provider.stage}-request-table-name
+  requestUniqueUserIdIndex: ${self:provider.stage}-request-unique-user-id-index
+
+resources:
+  Resources:
+    RequestTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.requestTableName}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: request_id
+            AttributeType: S
+          - AttributeName: requester_unique_user_id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: request_id
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: ${self:custom.requestUniqueUserIdIndex}
+            KeySchema:
+              - AttributeName: requester_unique_user_id
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL

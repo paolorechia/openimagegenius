@@ -1,8 +1,7 @@
-import html
-import json
 import logging
 import os
 import urllib.parse as parser
+from datetime import datetime, timezone
 
 from uuid import uuid4
 import boto3
@@ -99,9 +98,9 @@ def handler(event, context):
     else:
         logger.info("User not found, new user should be created :)")
         unique_user_id = str(uuid4())
-        clashed_users = ["TemporarySentinel"]
+        clashed_user = "TemporarySentinel"
         attempts = 0
-        while clashed_users and attempts <= 3:
+        while clashed_user and attempts <= 3:
             response = dynamo_db_client.get_item(
                 TableName=user_table_name,
                 Key={
@@ -110,9 +109,9 @@ def handler(event, context):
                     }
                 }
             )
-            logger.info("Response: %s", response)
-            clashed_users = response["Items"]
-            if clashed_users:
+            logger.info("Response from get item: %s", response)
+            clashed_user = response.get("Item")
+            if clashed_user:
                 unique_user_id = str(uuid4())
                 attempts += 1
 
@@ -126,12 +125,17 @@ def handler(event, context):
             }
 
         logger.info("Creating new user :)")
+        creation_time = datetime.now(tz=timezone.utc)
+        creation_time_iso = creation_time.isoformat()
+        creation_time_timestamp = creation_time.timestamp()
         dynamo_db_client.put_item(
             TableName=user_table_name,
             Item={
                 "unique_user_id": {"S": unique_user_id},
                 "google_user_id": {"S": google_user_id},
                 "user_google_email": {"S": user_google_email},
+                "creation_time_iso": {"S": creation_time_iso},
+                "creation_time_timestamp": {"S": str(creation_time_timestamp)}
             }
         )
 

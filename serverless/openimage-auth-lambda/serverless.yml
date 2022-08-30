@@ -24,8 +24,8 @@ provider:
             - "dynamodb:GetItem"
             - "dynamodb:Query"
           Resource:
-            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.userTableName}"
-            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.userTableName}/index/*"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.databaseInfo.userTableName}"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.databaseInfo.userTableName}/index/*"
 
 functions:
   redirect:
@@ -37,9 +37,9 @@ functions:
     layers:
       - Ref: PythonRequirementsLambdaLayer
     environment:
-      USER_TABLE_NAME: ${self:custom.userTableName}
-      GOOGLE_USER_ID_INDEX_NAME: ${self:custom.googleUserIdIndexName}
-      USER_GOOGLE_EMAIL_INDEX_NAME: ${self:custom.userGoogleEmailIndexName}
+      USER_TABLE_NAME: ${self:custom.databaseInfo.userTableName}
+      GOOGLE_USER_ID_INDEX_NAME: ${self:custom.databaseInfo.googleUserIdIndexName}
+      USER_GOOGLE_EMAIL_INDEX_NAME: ${self:custom.databaseInfo.userGoogleEmailIndexName}
       GOOGLE_OAUTH_APP_ID: ${self:custom.googleOAuthAppID}
 
   authorizer:
@@ -82,40 +82,9 @@ custom:
   OAuthAppIDMapping:
     dev: ${ssm:/dev/google-oauth-app-id}
   googleOAuthAppID: ${self:custom.OAuthAppIDMapping.${self:provider.stage}}
-  userTableName: ${self:provider.stage}-users-table
-  googleUserIdIndexName: ${self:provider.stage}-google-id-index
-  userGoogleEmailIndexName: ${self:provider.stage}-user-google-email
+  databaseInfo: ${file(../../database/serverless.yml):custom}
 
 resources:
-  Resources:
-    UserTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: ${self:custom.userTableName}
-        BillingMode: PAY_PER_REQUEST
-        AttributeDefinitions:
-          - AttributeName: unique_user_id
-            AttributeType: S
-          - AttributeName: google_user_id
-            AttributeType: S
-          - AttributeName: user_google_email
-            AttributeType: S
-        KeySchema:
-          - AttributeName: unique_user_id
-            KeyType: HASH
-        GlobalSecondaryIndexes:
-          - IndexName: ${self:custom.googleUserIdIndexName}
-            KeySchema:
-              - AttributeName: google_user_id
-                KeyType: HASH
-            Projection:
-              ProjectionType: ALL
-          - IndexName: ${self:custom.userGoogleEmailIndexName}
-            KeySchema:
-              - AttributeName: user_google_email
-                KeyType: HASH
-            Projection:
-              ProjectionType: ALL
   Outputs:
     AuthorizerLambdaFunction:
       Export:
