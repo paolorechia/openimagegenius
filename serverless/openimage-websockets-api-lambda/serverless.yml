@@ -3,6 +3,7 @@ frameworkVersion: "3"
 
 package:
   patterns:
+    - "!manual_dist"
     - "!node_modules/**"
     - "!auth-sls"
     - "!.serverless"
@@ -28,20 +29,33 @@ provider:
             - "dynamodb:GetItem"
             - "dynamodb:Query"
           Resource:
-            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.userTableName}"
-            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.userTableName}/index/*"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.databaseInfo.requestTableName}"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.databaseInfo.requestTableName}/index/*"
 
 functions:
-  connectHandler:
-    handler: event_handlers.connect
+  connectionHandler:
+    handler: event_handlers.connection
     events:
-      - websocket: $connect
-		
+      - websocket: 
+          route: $connect
+          authorizer:
+            arn: ${self:custom.authorizerArn}
+            resultTtlInSeconds: 0
+            identitySource:
+              - 'route.request.header.Authorization'
+            type: token
+
   defaultHandler:
     handler: event_handlers.default
     events:
       - websocket: $default #simple event definition without extra route property
 	
+  requestHandler:
+    handler: event_handlers.request
+    events:
+      - websocket:
+          route: request
+
   customFooHandler:
     handler: event_handlers.foo
     events:
@@ -53,6 +67,7 @@ plugins:
   - serverless-python-requirements
 
 custom:
+  authorizerArn: ${cf:openimagegenius-auth-dev.AuthorizerLambdaFunction}
   customDomain:
     domainName: ${self:provider.stage}.ws-api.openimagegenius.com
     stage: ${self:provider.stage}
@@ -64,28 +79,7 @@ custom:
     zip: true
     layer: true
     usePipenv: false
-  requestTableName: ${self:provider.stage}-request-table-name
-  requestUniqueUserIdIndex: ${self:provider.stage}-request-unique-user-id-index
-
-resources:
-  Resources:
-    RequestTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: ${self:custom.requestTableName}
-        BillingMode: PAY_PER_REQUEST
-        AttributeDefinitions:
-          - AttributeName: request_id
-            AttributeType: S
-          - AttributeName: requester_unique_user_id
-            AttributeType: S
-        KeySchema:
-          - AttributeName: request_id
-            KeyType: HASH
-        GlobalSecondaryIndexes:
-          - IndexName: ${self:custom.requestUniqueUserIdIndex}
-            KeySchema:
-              - AttributeName: requester_unique_user_id
-                KeyType: HASH
-            Projection:
-              ProjectionType: ALL
+    pipCmdExtraArgs:
+      - --no-index
+      - --find-links ./manual_dist
+  databaseInfo: ${file(../../database/serverless.yml):custom}

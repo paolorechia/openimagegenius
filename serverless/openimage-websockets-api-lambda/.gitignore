@@ -1,4 +1,5 @@
 # Distribution / packaging
+.ws_secret_pass
 .Python
 env/
 build/

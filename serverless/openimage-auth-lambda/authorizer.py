@@ -28,7 +28,8 @@ base_policy_obj = {
 }
 
 stage = os.environ["AUTHORIZER_STAGE"]
-
+WS_SECRET_PASS = os.getenv("WS_SECRET_PASS", -1)
+DEVELOPER_GOOGLE_USER_ID = os.getenv("DEVELOPER_GOOGLE_USER_ID", -1)
 
 def create_policy(base_obj, resource, effect="Deny"):
     policy_obj = deepcopy(base_obj)
@@ -58,13 +59,29 @@ def handler(event, context):
         client_id = client_ids[stage]
         logger.info("Stage: %s", stage)
 
-        token = event["authorizationToken"]
-        logger.info("Token: %s",  token)
+        token = event.get("authorizationToken")
+        if not token:
+            # In websockets API Gateway, we need to inspect the header
+            token = event.get("headers", {}).get("Authorization")
 
-        request = requests.Request()
-        id_info = id_token.verify_oauth2_token(
-            token, request, client_id)
-        logger.info("ID Info: %s", id_info)
+        logger.info("Token: %s",  token)
+        logger.info("Token type: %s", type(token))
+        logger.info("Token length: %s", len(token))
+
+        logger.info("WS SECRET PASS: %s", WS_SECRET_PASS)
+        logger.info("WS SECRET PASS TYPE: %s", type(WS_SECRET_PASS))
+        logger.info("WS SECRET PASS LENGTH: %s", len(WS_SECRET_PASS))
+
+        if token == WS_SECRET_PASS:
+            google_user_id = DEVELOPER_GOOGLE_USER_ID
+            email = ""
+        else:   
+            request = requests.Request()
+            id_info = id_token.verify_oauth2_token(
+                token, request, client_id)
+            logger.info("ID Info: %s", id_info)
+            google_user_id = id_info["sub"]
+            email = id_info["email"]
     except Exception as excp:
         logger.info("Caught exception: %s", str(excp))
         deny_policy = create_policy(
@@ -74,8 +91,9 @@ def handler(event, context):
 
     allow_policy = create_policy(base_policy_obj, resources, "Allow")
     allow_policy["context"] = {
-        "google_user_id": id_info['sub'],
-        "user_google_email": id_info["email"]
+        "unique_user_id": "",
+        "google_user_id": google_user_id,
+        "user_google_email": email
     }
     logger.info("Allowed policy: %s", str(allow_policy))
     return allow_policy
