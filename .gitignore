@@ -1,6 +1,6 @@
 *_credentials.json
 **/node_modules/**
-
+**/manual_dist/**
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

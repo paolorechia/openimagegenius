@@ -4,7 +4,12 @@ from google.oauth2 import id_token
 from google.auth.transport import requests
 import logging
 import os
+# Let's test the library import
+from openimage_backend_lib import helper
 
+assert helper.hello_helper() == "hello"
+print(helper.hello_helper())
+print("Loaded library built locally, congrats!")
 client_ids = {
     "dev": os.environ["GOOGLE_OAUTH_APP_ID"]
 }
