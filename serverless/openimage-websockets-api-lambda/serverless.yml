@@ -55,12 +55,8 @@ functions:
     events:
       - websocket:
           route: request
+          routeResponseSelectionExpression: $default
 
-  customFooHandler:
-    handler: event_handlers.foo
-    events:
-      - websocket:
-          route: foo # will trigger if $request.body.action === "foo"
 
 plugins:
   - serverless-domain-manager

@@ -13,4 +13,4 @@ def default(event, context):
 def request(event, context):
     print("Event", event)
     print("contex", context)
-    return {"statusCode": 200, "body": "Request"}
+    return {"statusCode": 200, "body": "Request Received"}

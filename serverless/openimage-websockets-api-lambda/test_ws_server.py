@@ -15,9 +15,9 @@ async def hello():
             "Authorization": ws_secret_pass
     }) as websocket:
         print("Connected!")
-        # await websocket.send(request_event)
-        # response = await websocket.recv()
-        # print("Got response", response)
+        await websocket.send(request_event)
+        response = await websocket.recv()
+        print("Got response:", response)
 
 asyncio.run(hello())
 
