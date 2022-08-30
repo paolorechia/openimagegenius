@@ -10,7 +10,9 @@ with open(".ws_secret_pass", "r") as fp:
         ws_secret_pass = fp.read().strip()
 
 request_event = json.dumps({
-        "action": "request"
+        "action": "request",
+        "request_type": "prompt",
+        "data": "As astronaut cat"
 })
 
 @pytest.mark.asyncio
@@ -21,4 +23,4 @@ async def test_connection_replies():
                 await websocket.send(request_event)
                 response = await websocket.recv()
                 print("Got response:", response)
-
+                assert response == "Brocoli"

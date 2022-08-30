@@ -45,18 +45,25 @@ class Request(BaseModel):
 
 
 def request_handler(event, context):
+    logger.info(event)
+    try:
+        json_body = json.loads(event["body"])
+    except json.JSONDecodeError:
+        return {"statusCode": 400, "body": "mal-formed JSON"}
     try:
         request = Request(
             unique_user_id=_.get(context, "unique_user_id"),
-            request_type=_.get(event, "body.request_type"),
-            prompt=_.get(event, "body.data")
+            request_type=_.get(json_body, "request_type"),
+            data=_.get(json_body, "data")
         )
     except ValidationError as excp:
+        logger.info("Bad request")
         return {"statusCode": 400, "body": str(excp)}
 
     request_id = str(uuid4())
     maybe_existing_request = repository.get_request(request_id)
     if maybe_existing_request:
+        logger.info("Conflict")
         return {"statusCode": 409, "body": "Request ID conflict, try again."}
 
     creation_time = datetime.now(tz=timezone.utc)
@@ -86,5 +93,5 @@ def request_handler(event, context):
             "requester_unique_user_id": request.unique_user_id,
         }),
     )
-
+    logger.info("Success")
     return {"statusCode": 200, "body": "Request Accepted."}

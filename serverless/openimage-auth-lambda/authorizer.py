@@ -82,6 +82,7 @@ def handler(event, context):
             logger.info("ID Info: %s", id_info)
             google_user_id = id_info["sub"]
             email = id_info["email"]
+        # TODO: Fetch user from DynamoDB
     except Exception as excp:
         logger.info("Caught exception: %s", str(excp))
         deny_policy = create_policy(
@@ -90,6 +91,7 @@ def handler(event, context):
         return deny_policy
 
     allow_policy = create_policy(base_policy_obj, resources, "Allow")
+    # TODO: Add unique_user_id here
     allow_policy["context"] = {
         "unique_user_id": "",
         "google_user_id": google_user_id,
