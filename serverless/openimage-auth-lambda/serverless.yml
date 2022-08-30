@@ -82,7 +82,7 @@ custom:
     usePipenv: false
     pipCmdExtraArgs:
       - --no-index
-      - --find-links /Users/paolorechia/dev/openimagegenius/serverless/openimage-auth-lambda/manual_dist
+      - --find-links ./manual_dist
   OAuthAppIDMapping:
     dev: ${ssm:/dev/google-oauth-app-id}
   googleOAuthAppID: ${self:custom.OAuthAppIDMapping.${self:provider.stage}}
