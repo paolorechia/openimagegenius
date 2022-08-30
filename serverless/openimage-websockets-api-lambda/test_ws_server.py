@@ -13,14 +13,6 @@ request_event = json.dumps({
         "action": "request"
 })
 
-# @pytest.mark.asyncio
-# async def test_connection_with_credentials():
-#     async with websockets.connect(test_endpoint, extra_headers={
-#             "Authorization": ws_secret_pass
-#     }) as websocket:
-#         print("Connected!")
-#         assert True
-
 @pytest.mark.asyncio
 async def test_connection_replies():
         async with websockets.connect(test_endpoint, extra_headers={

@@ -26,19 +26,22 @@ class Request(BaseModel):
     request_type: str
     unique_user_id: str
 
-    @validator('prompt')
+    @validator('data')
     def max_length_256(cls, v):
         if len(v) > 256:
-            raise ValueError("Prompt exceeds the limit of 256 characters.")
+            raise ValueError("data exceeds the limit of 256 characters.")
+        return v
 
     @validator('request_type')
-    def request_type(cls, v):
+    def request_type_validator(cls, v):
         if v.lower() not in models.REQUEST_TYPES:
             raise ValueError(f"Request type {v} is not recognized.")
+        return v
 
     @validator('unique_user_id')
     def check_if_valid_uuid_v4(cls, v):
         uuid4(v)
+        return v
 
 
 def request_handler(event, context):

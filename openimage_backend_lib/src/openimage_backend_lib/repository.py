@@ -1,5 +1,3 @@
-from re import L
-from urllib import request
 from .database_models import Metadata, RequestModel
 from typing import Optional
 import os
