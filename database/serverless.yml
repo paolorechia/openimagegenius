@@ -20,6 +20,9 @@ custom:
   userTableName: users-table-${self:provider.stage}
   googleUserIdIndexName: google-id-index-${self:provider.stage}
   userGoogleEmailIndexName: user-google-email-index-${self:provider.stage}
+  requestTableName: request-table-name-${self:provider.stage}
+  requestUniqueUserIdIndex: request-unique-user-id-index-${self:provider.stage}
+
 
 resources:
   Resources:
@@ -52,3 +55,24 @@ resources:
             Projection:
               ProjectionType: ALL
 
+
+    RequestTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.requestTableName}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: request_id
+            AttributeType: S
+          - AttributeName: requester_unique_user_id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: request_id
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: ${self:custom.requestUniqueUserIdIndex}
+            KeySchema:
+              - AttributeName: requester_unique_user_id
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
