@@ -16,6 +16,7 @@ provider:
   runtime: python3.8
   stage: ${opt:stage}
   region: eu-central-1
+  memorySize: 256
   iam:
     role:
       statements:
@@ -27,6 +28,17 @@ provider:
           Resource:
             - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.databaseInfo.userTableName}"
             - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.databaseInfo.userTableName}/index/*"
+  environment:
+    USER_TABLE_NAME: ${self:custom.databaseInfo.userTableName}
+    REQUEST_TABLE_NAME: ${self:custom.databaseInfo.requestTableName}
+    GOOGLE_USER_ID_INDEX_NAME: ${self:custom.databaseInfo.googleUserIdIndexName}
+    USER_GOOGLE_EMAIL_INDEX_NAME: ${self:custom.databaseInfo.userGoogleEmailIndexName}
+    REQUEST_UNIQUE_USER_ID_INDEX: ${self:custom.databaseInfo.requestUniqueUserIdIndex}
+    GOOGLE_OAUTH_APP_ID: ${self:custom.googleOAuthAppID}
+    AUTHORIZER_STAGE: ${self:provider.stage}
+    DEVELOPER_GOOGLE_USER_ID: ${ssm:/dev/develop-google-user-id} # Only exists in dev stage
+    WS_SECRET_PASS: ${ssm:/dev/websockets-api/admin-creds} # Only exists in dev stage
+
 
 functions:
   redirect:
@@ -37,22 +49,13 @@ functions:
           method: POST
     layers:
       - Ref: PythonRequirementsLambdaLayer
-    environment:
-      USER_TABLE_NAME: ${self:custom.databaseInfo.userTableName}
-      GOOGLE_USER_ID_INDEX_NAME: ${self:custom.databaseInfo.googleUserIdIndexName}
-      USER_GOOGLE_EMAIL_INDEX_NAME: ${self:custom.databaseInfo.userGoogleEmailIndexName}
-      GOOGLE_OAUTH_APP_ID: ${self:custom.googleOAuthAppID}
-
+    timeout: 6
 
   authorizer:
     handler: authorizer.handler
     layers:
       - Ref: PythonRequirementsLambdaLayer
-    environment:
-      GOOGLE_OAUTH_APP_ID: ${self:custom.googleOAuthAppID}
-      AUTHORIZER_STAGE: ${self:provider.stage}
-      DEVELOPER_GOOGLE_USER_ID: ${ssm:/dev/develop-google-user-id} # Only exists in dev stage
-      WS_SECRET_PASS: ${ssm:/dev/websockets-api/admin-creds} # Only exists in dev stage
+    timeout: 8
 
 
   testAuthorizer:
@@ -66,6 +69,7 @@ functions:
             resultTtlInSeconds: 0
             identitySource: method.request.header.Authorization
             type: token
+    timeout: 10
 
 plugins:
   - serverless-domain-manager

@@ -13,7 +13,8 @@ class UserModel(BaseModel):
     unique_user_id: str
     google_user_id: str
     user_google_email: str
-
+    creation_time_iso: str
+    creation_time_timestamp: str
 
 class RequestModel(BaseModel):
     request_id: str

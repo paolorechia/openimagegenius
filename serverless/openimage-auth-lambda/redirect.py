@@ -1,3 +1,4 @@
+from enum import unique
 import logging
 import os
 import urllib.parse as parser
@@ -8,6 +9,13 @@ import boto3
 from google.auth.transport import requests
 from google.oauth2 import id_token
 
+from openimage_backend_lib import database_models as models
+from openimage_backend_lib import repository as repo_module
+
+dynamodb_client = boto3.client("dynamodb")
+environment = repo_module.EnvironmentInfo()
+repository = repo_module.Repository(dynamodb_client, environment)
+
 client_ids = {
     "dev": os.environ["GOOGLE_OAUTH_APP_ID"]
 }
@@ -16,9 +24,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 dynamo_db_client = boto3.client("dynamodb")
-user_table_name = os.environ["USER_TABLE_NAME"]
-google_user_id_index_name = os.environ["GOOGLE_USER_ID_INDEX_NAME"]
-user_google_email_index_name = os.environ["USER_GOOGLE_EMAIL_INDEX_NAME"]
+
 
 html_success_page = """
 <html>
@@ -73,17 +79,9 @@ def handler(event, context):
     user_google_email = id_info["email"]
 
     logging.info("Looking for existing user...")
-    response = dynamo_db_client.query(
-        TableName=user_table_name,
-        IndexName=google_user_id_index_name,
-        KeyConditionExpression="google_user_id = :gui",
-        ExpressionAttributeValues={
-            ":gui": {"S": google_user_id}
-        }
-    )
-    logger.info("Response from DynamoDB: %s", response)
-    existing_users = response["Items"]
-    if len(existing_users) > 1:
+    try:
+        user = repository.get_user_by_google_user_id(google_user_id)
+    except IndexError:
         logger.info("Multiple users found, something went wrong :(")
         return {
             "statusCode": 409,
@@ -92,52 +90,43 @@ def handler(event, context):
                 "Content-Type": "text/html"
             }
         }
-    elif len(existing_users) == 1:
-        logger.info("User found :)")
-        unique_user_id = existing_users[0]["unique_user_id"]["S"]
+    if user:
+        unique_user_id = user.unique_user_id
     else:
         logger.info("User not found, new user should be created :)")
         unique_user_id = str(uuid4())
         clashed_user = "TemporarySentinel"
         attempts = 0
         while clashed_user and attempts <= 3:
-            response = dynamo_db_client.get_item(
-                TableName=user_table_name,
-                Key={
-                    "unique_user_id": {
-                        "S": unique_user_id
-                    }
-                }
-            )
-            logger.info("Response from get item: %s", response)
-            clashed_user = response.get("Item")
+            clashed_user = repository.get_user_by_unique_id(
+                unique_user_id)
+
             if clashed_user:
                 unique_user_id = str(uuid4())
                 attempts += 1
 
-        if attempts > 3:
-            return {
-                "statusCode": 503,
-                "body": html_failure_page.format("Could not process your request at this time, please try again later."),
-                "headers": {
-                    "Content-Type": "text/html"
+            if attempts > 3:
+                return {
+                    "statusCode": 503,
+                    "body": html_failure_page.format("Could not process your request at this time, please try again later."),
+                    "headers": {
+                        "Content-Type": "text/html"
+                    }
                 }
-            }
 
-        logger.info("Creating new user :)")
-        creation_time = datetime.now(tz=timezone.utc)
-        creation_time_iso = creation_time.isoformat()
-        creation_time_timestamp = creation_time.timestamp()
-        dynamo_db_client.put_item(
-            TableName=user_table_name,
-            Item={
-                "unique_user_id": {"S": unique_user_id},
-                "google_user_id": {"S": google_user_id},
-                "user_google_email": {"S": user_google_email},
-                "creation_time_iso": {"S": creation_time_iso},
-                "creation_time_timestamp": {"S": str(creation_time_timestamp)}
-            }
-        )
+            logger.info("Creating new user :)")
+            creation_time = datetime.now(tz=timezone.utc)
+            creation_time_iso = creation_time.isoformat()
+            creation_time_timestamp = creation_time.timestamp()
+            repository.save_user(
+                models.UserModel(
+                    unique_user_id=unique_user_id,
+                    google_user_id=google_user_id,
+                    user_google_email=user_google_email,
+                    creation_time_iso=creation_time_iso,
+                    creation_time_timestamp=creation_time_timestamp,
+                )
+            )
 
     body = {
         "message": "Authorized successfully!",

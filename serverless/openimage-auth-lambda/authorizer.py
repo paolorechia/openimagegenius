@@ -1,14 +1,20 @@
-from typing import List
-from copy import deepcopy
-from google.oauth2 import id_token
-from google.auth.transport import requests
 import logging
 import os
-# Let's test the library import
-from openimage_backend_lib import helper
+from copy import deepcopy
+from typing import List
 
-assert helper.hello_helper() == "hello"
-print(helper.hello_helper())
+import time
+# Let's test the library import
+import boto3
+from google.auth.transport import requests
+from google.oauth2 import id_token
+from openimage_backend_lib import database_models as models
+from openimage_backend_lib import repository as repo_module
+
+dynamodb_client = boto3.client("dynamodb")
+environment = repo_module.EnvironmentInfo()
+repository = repo_module.Repository(dynamodb_client, environment)
+
 print("Loaded library built locally, congrats!")
 client_ids = {
     "dev": os.environ["GOOGLE_OAUTH_APP_ID"]
@@ -30,6 +36,7 @@ base_policy_obj = {
 stage = os.environ["AUTHORIZER_STAGE"]
 WS_SECRET_PASS = os.getenv("WS_SECRET_PASS", -1)
 DEVELOPER_GOOGLE_USER_ID = os.getenv("DEVELOPER_GOOGLE_USER_ID", -1)
+
 
 def create_policy(base_obj, resource, effect="Deny"):
     policy_obj = deepcopy(base_obj)
@@ -53,7 +60,6 @@ def find_resources(event, stage) -> List[str]:
 def handler(event, context):
     logger.info("Event: %s", event)
     try:
-
         resources = find_resources(event, stage)
 
         client_id = client_ids[stage]
@@ -75,14 +81,21 @@ def handler(event, context):
         if token == WS_SECRET_PASS:
             google_user_id = DEVELOPER_GOOGLE_USER_ID
             email = ""
-        else:   
+        else:
             request = requests.Request()
             id_info = id_token.verify_oauth2_token(
                 token, request, client_id)
             logger.info("ID Info: %s", id_info)
             google_user_id = id_info["sub"]
             email = id_info["email"]
-        # TODO: Fetch user from DynamoDB
+        user: models.UserModel = repository.get_user_by_google_user_id(google_user_id)
+        if not user:
+            # Sleep a couple seconds and try again
+            # To make sure index is not offsync
+            time.sleep(2)
+            user = repository.get_user_by_google_user_id(google_user_id)
+        if not user:
+            raise IndexError(f"User by google user id {google_user_id} not found.")
     except Exception as excp:
         logger.info("Caught exception: %s", str(excp))
         deny_policy = create_policy(
@@ -93,9 +106,9 @@ def handler(event, context):
     allow_policy = create_policy(base_policy_obj, resources, "Allow")
     # TODO: Add unique_user_id here
     allow_policy["context"] = {
-        "unique_user_id": "",
-        "google_user_id": google_user_id,
-        "user_google_email": email
+        "unique_user_id": user.unique_user_id,
+        "google_user_id": user.google_user_ud,
+        "user_google_email": user.user_google_email
     }
     logger.info("Allowed policy: %s", str(allow_policy))
     return allow_policy
