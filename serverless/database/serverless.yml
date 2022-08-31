@@ -27,9 +27,8 @@ custom:
   requestUniqueUserIdIndex: request-unique-user-id-index-${self:provider.stage}
 
   # GPU user table
-  GPUUserTableName: gpu-users-table-${self:provider.stage}
-  GPUAPITokenIndex: gpu-api-token-index-${self:provider.stage}
-  GPUUniqueUserIdIndex: gpu-unique-user-id-index-${self:provider.stage}
+  APITokenTable: api-token-table-${self:provider.stage}
+  APITokenUniqueUserIdIndex: api-token-unique-user-id-index-${self:provider.stage}
 
 resources:
   Resources:
@@ -62,7 +61,6 @@ resources:
             Projection:
               ProjectionType: ALL
 
-
     RequestTable:
       Type: AWS::DynamoDB::Table
       Properties:
@@ -84,14 +82,12 @@ resources:
             Projection:
               ProjectionType: ALL
 
-    GPUUserTable:
+    APITokenTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: ${self:custom.GPUUserTableName}
+        TableName: ${self:custom.APITokenTable}
         BillingMode: PAY_PER_REQUEST
         AttributeDefinitions:
-          - AttributeName: gpu_user_id
-            AttributeType: S
           - AttributeName: api_token
             AttributeType: S
           - AttributeName: unique_user_id
@@ -100,13 +96,7 @@ resources:
           - AttributeName: gpu_user_id
             KeyType: HASH
         GlobalSecondaryIndexes:
-          - IndexName: ${self:custom.GPUAPITokenIndex}
-            KeySchema:
-              - AttributeName: api_token
-                KeyType: HASH
-            Projection:
-              ProjectionType: ALL
-          - IndexName: ${self:custom.GPUUniqueUserIdIndex}
+          - IndexName: ${self:custom.APITokenUniqueUserIdIndex}
             KeySchema:
               - AttributeName: unique_user_id
                 KeyType: HASH

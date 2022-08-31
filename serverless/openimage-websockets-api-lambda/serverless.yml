@@ -29,13 +29,12 @@ provider:
     # Tables
     USER_TABLE_NAME: ${self:custom.databaseInfo.userTableName}
     REQUEST_TABLE_NAME: ${self:custom.databaseInfo.requestTableName}
-    GPU_USER_TABLE_NAME: ${self:custom.databaseInfo.GPUUserTableName}
+    API_TOKEN_TABLE_NAME: ${self:custom.databaseInfo.APITokenTable}
     # Indices
     GOOGLE_USER_ID_INDEX_NAME: ${self:custom.databaseInfo.googleUserIdIndexName}
     USER_GOOGLE_EMAIL_INDEX_NAME: ${self:custom.databaseInfo.userGoogleEmailIndexName}
     REQUEST_UNIQUE_USER_ID_INDEX: ${self:custom.databaseInfo.requestUniqueUserIdIndex}
-    GPU_API_TOKEN_INDEX: ${self:custom.databaseInfo.GPUAPITokenIndex}
-    GPU_UNIQUE_USER_ID_INDEX: ${self:custom.databaseInfo.GPUUniqueUserIdIndex}
+    API_TOKEN_UNIQUE_USER_ID_INDEX: ${self:custom.databaseInfo.APITokenUniqueUserIdIndex}
     # Others
     SQS_REQUEST_URL: ${self:custom.imageProcessingQueueUrl}
   iam:

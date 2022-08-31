@@ -25,17 +25,18 @@ provider:
   websocketsApiRouteSelectionExpression: $request.body.action # custom routes are selected by the value of the action property in the body
   websocketsDescription: Serverless Websockets for Using Facing API
   environment:
-    SQS_REQUEST_URL: ${self:custom.imageProcessingQueueUrl}
     # Tables
     USER_TABLE_NAME: ${self:custom.databaseInfo.userTableName}
     REQUEST_TABLE_NAME: ${self:custom.databaseInfo.requestTableName}
-    GPU_USER_TABLE_NAME: ${self:custom.databaseInfo.GPUUserTableName}
-    # Indice
+    API_TOKEN_TABLE_NAME: ${self:custom.databaseInfo.APITokenTable}
+    # Indices
     GOOGLE_USER_ID_INDEX_NAME: ${self:custom.databaseInfo.googleUserIdIndexName}
     USER_GOOGLE_EMAIL_INDEX_NAME: ${self:custom.databaseInfo.userGoogleEmailIndexName}
     REQUEST_UNIQUE_USER_ID_INDEX: ${self:custom.databaseInfo.requestUniqueUserIdIndex}
-    GPU_API_TOKEN_INDEX: ${self:custom.databaseInfo.GPUAPITokenIndex}
-    GPU_UNIQUE_USER_ID_INDEX: ${self:custom.databaseInfo.GPUUniqueUserIdIndex}
+    API_TOKEN_UNIQUE_USER_ID_INDEX: ${self:custom.databaseInfo.APITokenUniqueUserIdIndex}
+    # Others
+    AUTHORIZER_STAGE: ${self:provider.stage}
+
   iam:
     role:
       statements:
@@ -45,13 +46,8 @@ provider:
             - "dynamodb:GetItem"
             - "dynamodb:Query"
           Resource:
-            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.databaseInfo.requestTableName}"
-            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.databaseInfo.requestTableName}/index/*"
-        - Effect: Allow
-          Action:
-            - "sqs:SendMessage"
-          Resource:
-            - "arn:aws:sqs:${self:provider.region}:*:${self:custom.imageProcessingQueueName}"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.databaseInfo.APITokenTable}"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.databaseInfo.APITokenTable}/index/*"
 
 functions:
   connectionHandler:
@@ -62,10 +58,14 @@ functions:
           authorizer:
             arn: ${self:custom.authorizerArn}
             identitySource:
-              - 'route.request.header.Authorization'
+              - 'route.request.header.api-key'
     layers:
       - Ref: PythonRequirementsLambdaLayer
 
+  GPUAuthorizer:
+    handler: gpu_node_authorizer.handler
+    layers:
+      - Ref: PythonRequirementsLambdaLayer
 
   defaultHandler:
     handler: event_handlers.default
@@ -73,15 +73,7 @@ functions:
       - websocket: $default #simple event definition without extra route property
     layers:
       - Ref: PythonRequirementsLambdaLayer
-	
-  requestHandler:
-    handler: event_handlers.request
-    layers:
-      - Ref: PythonRequirementsLambdaLayer
-    events:
-      - websocket:
-          route: request
-          routeResponseSelectionExpression: $default
+
 
 plugins:
   - serverless-domain-manager
@@ -92,7 +84,7 @@ custom:
   imageProcessingQueueName: image-processing-${self:provider.stage}
   imageProcessingQueueUrl: !Ref ImageProcessingQueue
   customDomain:
-    domainName: ${self:provider.stage}.ws-api.openimagegenius.com
+    domainName: ${self:provider.stage}.ws-gpus.openimagegenius.com
     stage: ${self:provider.stage}
     createRoute53Record: true
     endpointType: REGIONAL
@@ -103,22 +95,3 @@ custom:
     layer: true
     usePipenv: false
   databaseInfo: ${file(../database/serverless.yml):custom}
-
-resources:
-  Resources:
-    ImageProcessingQueueDLQ:
-      Type: AWS::SQS::Queue
-      Properties: 
-        DelaySeconds: 0
-        QueueName: image-processing-dead-letter-queue-${self:provider.stage}
-        VisibilityTimeout: 30
-
-    ImageProcessingQueue:
-      Type: AWS::SQS::Queue
-      Properties: 
-        DelaySeconds: 0
-        QueueName: ${self:custom.imageProcessingQueueName}
-        RedrivePolicy:
-          deadLetterTargetArn: !GetAtt ImageProcessingQueueDLQ.Arn
-          maxReceiveCount: 3
-        VisibilityTimeout: 30

@@ -5,7 +5,7 @@ import pytest
 
 
 
-test_endpoint = "wss://dev.ws-api.openimagegenius.com"
+test_endpoint = "wss://dev.ws-gpus.openimagegenius.com"
 with open(".ws_secret_pass", "r") as fp:
         ws_secret_pass = fp.read().strip()
 

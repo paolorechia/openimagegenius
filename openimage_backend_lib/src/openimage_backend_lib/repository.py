@@ -1,5 +1,5 @@
 from enum import unique
-from .database_models import Metadata, RequestModel, UserModel
+from .database_models import Metadata, RequestModel, UserModel, APITokenModel
 from typing import Optional
 import os
 import logging
@@ -13,13 +13,13 @@ class EnvironmentInfo:
         # tables
         self.user_table_name = os.environ["USER_TABLE_NAME"]
         self.request_table_name = os.environ["REQUEST_TABLE_NAME"]
-        self.gpu_user_table_name = os.environ["GPU_USER_TABLE_NAME"]
+        self.api_token_table_name = os.environ["API_TOKEN_TABLE_NAME"]
         # indices
         self.google_user_id_index_name = os.environ["GOOGLE_USER_ID_INDEX_NAME"]
         self.user_google_email_index_name = os.environ["USER_GOOGLE_EMAIL_INDEX_NAME"]
         self.request_unique_user_id_index = os.environ["REQUEST_UNIQUE_USER_ID_INDEX"]
-        self.gpu_api_token_index = os.environ["GPU_API_TOKEN_INDEX"]
-        self.gpu_unique_user_id_index = os.environ["GPU_UNIQUE_USER_ID_INDEX"]
+        self.api_token_unique_user_id_index = os.environ["API_TOKEN_UNIQUE_USER_ID_INDEX"]
+
 
 def flatten_response(dynamodb_dict_response):
     flat_dict = {}
@@ -111,3 +111,16 @@ class Repository:
             }
         )
         logger.info("User saved")
+
+    def get_user_by_api_token(self, api_token: str) -> Optional[APITokenModel]:
+        logger.info("Requesting gpu user by api token: %s", api_token)
+        response = self.ddb.get_item(
+            TableName=self.environment.api_token_table_name,
+            Key={
+                Metadata.APITokenTable.primary_key: {
+                    "S": api_token
+                }
+            }
+        )
+        logger.info("Response from 'Dynamo': %s", response)
+        return response.get("Item")

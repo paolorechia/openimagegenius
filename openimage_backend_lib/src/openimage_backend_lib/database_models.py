@@ -8,6 +8,9 @@ class Metadata:
     class RequestTable:
         primary_key = "request_id"
 
+    class APITokenTable:
+        primary_key = "api_token"
+
 
 class UserModel(BaseModel):
     unique_user_id: str
@@ -15,6 +18,10 @@ class UserModel(BaseModel):
     user_google_email: str
     creation_time_iso: str
     creation_time_timestamp: str
+
+class APITokenModel(BaseModel):
+    api_token: str
+    unique_user_id: str
 
 class RequestModel(BaseModel):
     request_id: str
