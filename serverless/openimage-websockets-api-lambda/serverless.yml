@@ -97,9 +97,6 @@ custom:
     zip: true
     layer: true
     usePipenv: false
-    pipCmdExtraArgs:
-      - --no-index
-      - --find-links ./manual_dist
   databaseInfo: ${file(../../database/serverless.yml):custom}
 
 resources:
