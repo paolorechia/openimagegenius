@@ -1,0 +1,8 @@
+# serverless-compose.yml
+services:
+  openimagegenius-database:
+    path: database
+  openimagegenius-auth:
+    path: openimagegenius-auth-lambda
+  openimagegenius-websockets-api:
+    path: openimage-websockets-api-lambda
