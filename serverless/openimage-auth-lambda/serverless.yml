@@ -88,9 +88,6 @@ custom:
     zip: true
     layer: true
     usePipenv: false
-    pipCmdExtraArgs:
-      - --no-index
-      - --find-links ./manual_dist
   OAuthAppIDMapping:
     dev: ${ssm:/dev/google-oauth-app-id}
   googleOAuthAppID: ${self:custom.OAuthAppIDMapping.${self:provider.stage}}

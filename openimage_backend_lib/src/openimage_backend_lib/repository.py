@@ -96,7 +96,7 @@ class Repository:
 
     def save_user(self, new_user: UserModel) -> None:
         logger.info("Saving user to Dynamo: %s", str(new_user))
-        self.dbb.put_item(
+        self.ddb.put_item(
             TableName=self.environment.user_table_name,
             Item={
                 "unique_user_id": {"S": new_user.unique_user_id},
