@@ -43,6 +43,7 @@ provider:
         - Effect: Allow
           Action:
             - "dynamodb:PutItem"
+            - "dynamodb:UpdateItem"
             - "dynamodb:GetItem"
             - "dynamodb:Query"
           Resource:

@@ -1,3 +1,19 @@
+import logging
+import os
+
+import boto3
+import pydash as _
+
+from openimage_backend_lib import repository as repo_module
+
+dynamodb_client = boto3.client("dynamodb")
+environment = repo_module.EnvironmentInfo()
+repository = repo_module.Repository(dynamodb_client, environment)
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+api_client = boto3.client('apigatewaymanagementapi')
 
 def connection(event, context):
     """"
@@ -5,26 +21,6 @@ def connection(event, context):
         'headers': {
             'Authorization': 'AAAAA',
             'Host': 'dev.ws-api.openimagegenius.com',
-            'Sec-WebSocket-Extensions': 'permessage-deflate; client_max_window_bits',
-            'Sec-WebSocket-Key': 'WkQgPq2aaLgLt09qzhmA8g==',
-            'Sec-WebSocket-Version': '13',
-            'User-Agent': 'Python/3.8 websockets/10.3',
-            'X-Amzn-Trace-Id': 'Root=1-630f637c-74d9e0581d71eb9d0ca0b056',
-            'X-Forwarded-For': '93.193.144.114',
-            'X-Forwarded-Port': '443',
-            'X-Forwarded-Proto': 'https'
-        },
-        'multiValueHeaders': {
-            'Authorization': ['AAAAA'],
-            'Host': ['dev.ws-api.openimagegenius.com'],
-            'Sec-WebSocket-Extensions': ['permessage-deflate; client_max_window_bits'],
-            'Sec-WebSocket-Key': ['WkQgPq2aaLgLt09qzhmA8g=='],
-            'Sec-WebSocket-Version': ['13'],
-            'User-Agent': ['Python/3.8 websockets/10.3'],
-            'X-Amzn-Trace-Id': ['Root=1-630f637c-74d9e0581d71eb9d0ca0b056'],
-            'X-Forwarded-For': ['93.193.144.114'],
-            'X-Forwarded-Port': ['443'],
-            'X-Forwarded-Proto': ['https']
         },
         'requestContext': {
             'routeKey': '$connect',
@@ -49,10 +45,11 @@ def connection(event, context):
         'isBase64Encoded': False
     }
     """
-    print("Event", event)
-    print("contex", context)
-    return {"statusCode": 200, "body": "You're authorized :)"}
-
+    logger.info("Event: %s", event)
+    api_token = _.get(event, "requestContext.authorizer.api_token")
+    connection_id = _.get(event, "requestContext.connectionId")
+    repository.set_connection_id_for_token(api_token, connection_id)
+    return {"statusCode": 200, "body": "Connected"}
 
 def default(event, context):
     print("Event", event)

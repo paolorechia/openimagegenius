@@ -28,6 +28,7 @@ def flatten_response(dynamodb_dict_response):
         flat_dict[key] = item[type_]
     return flat_dict
 
+
 def to_dynamodb_strings(model_dict_instance):
     to_dynamo = {}
     for key, item in model_dict_instance.items():
@@ -112,7 +113,8 @@ class Repository:
         logger.info("User saved")
 
     def get_user_by_api_token(self, api_token: str) -> Optional[APITokenModel]:
-        logger.info("Requesting gpu user by api token: %s", api_token)
+        logger.info("Requesting gpu user by api token: %s*****",
+                    api_token[0:5])
         response = self.ddb.get_item(
             TableName=self.environment.api_token_table_name,
             Key={
@@ -125,3 +127,20 @@ class Repository:
         item = response.get("Item")
         if item:
             return APITokenModel(**flatten_response(item))
+
+    def set_connection_id_for_token(self, api_token: str, connection_id):
+        logger.info("Setting connection ID: %s on token: %s*****",
+                    connection_id, api_token[0:5])
+
+        self.ddb.update_item(
+            TableName=self.environment.api_token_table_name,
+            Key={
+                Metadata.APITokenTable.primary_key: {
+                    "S": api_token
+                }
+            },
+            UpdateExpression="SET connection_id = :cid",
+            ExpressionAttributeValues={
+                ":cid": {"S": connection_id}
+            }
+        )
