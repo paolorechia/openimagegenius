@@ -93,7 +93,7 @@ resources:
           - AttributeName: unique_user_id
             AttributeType: S
         KeySchema:
-          - AttributeName: gpu_user_id
+          - AttributeName: api_token
             KeyType: HASH
         GlobalSecondaryIndexes:
           - IndexName: ${self:custom.APITokenUniqueUserIdIndex}

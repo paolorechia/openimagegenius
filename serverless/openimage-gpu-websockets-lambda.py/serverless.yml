@@ -21,9 +21,9 @@ provider:
   runtime: python3.8
   stage: ${opt:stage}
   region: eu-central-1
-  websocketsApiName: openimage-websockets-api-${self:provider.stage}
+  websocketsApiName: openimage-websockets-gpus-${self:provider.stage}
   websocketsApiRouteSelectionExpression: $request.body.action # custom routes are selected by the value of the action property in the body
-  websocketsDescription: Serverless Websockets for Using Facing API
+  websocketsDescription: Serverless Websockets for GPU Nodes
   environment:
     # Tables
     USER_TABLE_NAME: ${self:custom.databaseInfo.userTableName}
@@ -56,9 +56,9 @@ functions:
       - websocket: 
           route: $connect
           authorizer:
-            arn: ${self:custom.authorizerArn}
+            name: GPUAuthorizer
             identitySource:
-              - 'route.request.header.api-key'
+              - 'route.request.header.Authorization'
     layers:
       - Ref: PythonRequirementsLambdaLayer
 
@@ -70,7 +70,9 @@ functions:
   defaultHandler:
     handler: event_handlers.default
     events:
-      - websocket: $default #simple event definition without extra route property
+      - websocket:
+          route: $default
+          routeResponseSelectionExpression: $default
     layers:
       - Ref: PythonRequirementsLambdaLayer
 

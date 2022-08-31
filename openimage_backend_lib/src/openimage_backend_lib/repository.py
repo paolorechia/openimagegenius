@@ -28,7 +28,6 @@ def flatten_response(dynamodb_dict_response):
         flat_dict[key] = item[type_]
     return flat_dict
 
-
 def to_dynamodb_strings(model_dict_instance):
     to_dynamo = {}
     for key, item in model_dict_instance.items():
@@ -123,4 +122,6 @@ class Repository:
             }
         )
         logger.info("Response from 'Dynamo': %s", response)
-        return response.get("Item")
+        item = response.get("Item")
+        if item:
+            return APITokenModel(**flatten_response(item))
