@@ -2,7 +2,7 @@ import json
 import logging
 import os
 from datetime import datetime, timezone
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import boto3
 import pydantic
@@ -40,7 +40,7 @@ class Request(BaseModel):
 
     @validator('unique_user_id')
     def check_if_valid_uuid_v4(cls, v):
-        uuid4(v)
+        UUID(v, version=4)
         return v
 
 
@@ -52,7 +52,8 @@ def request_handler(event, context):
         return {"statusCode": 400, "body": "mal-formed JSON"}
     try:
         request = Request(
-            unique_user_id=_.get(context, "unique_user_id"),
+            unique_user_id=_.get(
+                event, "requestContext.authorizer.unique_user_id"),
             request_type=_.get(json_body, "request_type"),
             data=_.get(json_body, "data")
         )

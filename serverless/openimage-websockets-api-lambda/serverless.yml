@@ -97,7 +97,7 @@ custom:
     zip: true
     layer: true
     usePipenv: false
-  databaseInfo: ${file(../../database/serverless.yml):custom}
+  databaseInfo: ${file(../database/serverless.yml):custom}
 
 resources:
   Resources:

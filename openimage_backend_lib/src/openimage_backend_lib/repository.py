@@ -40,7 +40,7 @@ class Repository:
     def get_request(self, request_id) -> Optional[RequestModel]:
         logger.info("Looking for request in database...%s", str(request_id))
         response = self.ddb.get_item(
-            TableName=self.enviroment.request_table_name,
+            TableName=self.environment.request_table_name,
             Key={
                 Metadata.RequestTable.primary_key: {"S": request_id}
             }

@@ -91,7 +91,7 @@ custom:
   OAuthAppIDMapping:
     dev: ${ssm:/dev/google-oauth-app-id}
   googleOAuthAppID: ${self:custom.OAuthAppIDMapping.${self:provider.stage}}
-  databaseInfo: ${file(../../database/serverless.yml):custom}
+  databaseInfo: ${file(../database/serverless.yml):custom}
 
 resources:
   Outputs:

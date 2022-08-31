@@ -107,7 +107,7 @@ def handler(event, context):
     # TODO: Add unique_user_id here
     allow_policy["context"] = {
         "unique_user_id": user.unique_user_id,
-        "google_user_id": user.google_user_ud,
+        "google_user_id": user.google_user_id,
         "user_google_email": user.user_google_email
     }
     logger.info("Allowed policy: %s", str(allow_policy))
