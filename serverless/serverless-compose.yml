@@ -6,3 +6,5 @@ services:
     path: openimagegenius-auth-lambda
   openimagegenius-websockets-api:
     path: openimage-websockets-api-lambda
+  openimagegenius-gpu-websockets:
+    path: openimage-gpu-websockets-lambda
