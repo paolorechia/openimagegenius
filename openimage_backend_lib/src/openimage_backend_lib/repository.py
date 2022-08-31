@@ -10,12 +10,16 @@ logger.setLevel(logging.INFO)
 
 class EnvironmentInfo:
     def __init__(self) -> None:
+        # tables
         self.user_table_name = os.environ["USER_TABLE_NAME"]
         self.request_table_name = os.environ["REQUEST_TABLE_NAME"]
+        self.gpu_user_table_name = os.environ["GPU_USER_TABLE_NAME"]
+        # indices
         self.google_user_id_index_name = os.environ["GOOGLE_USER_ID_INDEX_NAME"]
         self.user_google_email_index_name = os.environ["USER_GOOGLE_EMAIL_INDEX_NAME"]
         self.request_unique_user_id_index = os.environ["REQUEST_UNIQUE_USER_ID_INDEX"]
-
+        self.gpu_api_token_index = os.environ["GPU_API_TOKEN_INDEX"]
+        self.gpu_unique_user_id_index = os.environ["GPU_UNIQUE_USER_ID_INDEX"]
 
 def flatten_response(dynamodb_dict_response):
     flat_dict = {}

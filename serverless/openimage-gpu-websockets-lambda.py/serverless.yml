@@ -1,5 +1,4 @@
-service: openimagegenius-websockets-api
-
+service: openimagegenius-gpu-websockets
 frameworkVersion: "3"
 
 package:
@@ -26,18 +25,17 @@ provider:
   websocketsApiRouteSelectionExpression: $request.body.action # custom routes are selected by the value of the action property in the body
   websocketsDescription: Serverless Websockets for Using Facing API
   environment:
+    SQS_REQUEST_URL: ${self:custom.imageProcessingQueueUrl}
     # Tables
     USER_TABLE_NAME: ${self:custom.databaseInfo.userTableName}
     REQUEST_TABLE_NAME: ${self:custom.databaseInfo.requestTableName}
     GPU_USER_TABLE_NAME: ${self:custom.databaseInfo.GPUUserTableName}
-    # Indices
+    # Indice
     GOOGLE_USER_ID_INDEX_NAME: ${self:custom.databaseInfo.googleUserIdIndexName}
     USER_GOOGLE_EMAIL_INDEX_NAME: ${self:custom.databaseInfo.userGoogleEmailIndexName}
     REQUEST_UNIQUE_USER_ID_INDEX: ${self:custom.databaseInfo.requestUniqueUserIdIndex}
     GPU_API_TOKEN_INDEX: ${self:custom.databaseInfo.GPUAPITokenIndex}
     GPU_UNIQUE_USER_ID_INDEX: ${self:custom.databaseInfo.GPUUniqueUserIdIndex}
-    # Others
-    SQS_REQUEST_URL: ${self:custom.imageProcessingQueueUrl}
   iam:
     role:
       statements:

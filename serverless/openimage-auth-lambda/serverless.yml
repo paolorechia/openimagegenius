@@ -29,11 +29,17 @@ provider:
             - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.databaseInfo.userTableName}"
             - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.databaseInfo.userTableName}/index/*"
   environment:
+    # Tables
     USER_TABLE_NAME: ${self:custom.databaseInfo.userTableName}
     REQUEST_TABLE_NAME: ${self:custom.databaseInfo.requestTableName}
+    GPU_USER_TABLE_NAME: ${self:custom.databaseInfo.GPUUserTableName}
+    # Indices
     GOOGLE_USER_ID_INDEX_NAME: ${self:custom.databaseInfo.googleUserIdIndexName}
     USER_GOOGLE_EMAIL_INDEX_NAME: ${self:custom.databaseInfo.userGoogleEmailIndexName}
     REQUEST_UNIQUE_USER_ID_INDEX: ${self:custom.databaseInfo.requestUniqueUserIdIndex}
+    GPU_API_TOKEN_INDEX: ${self:custom.databaseInfo.GPUAPITokenIndex}
+    GPU_UNIQUE_USER_ID_INDEX: ${self:custom.databaseInfo.GPUUniqueUserIdIndex}
+    # Others
     GOOGLE_OAUTH_APP_ID: ${self:custom.googleOAuthAppID}
     AUTHORIZER_STAGE: ${self:provider.stage}
     DEVELOPER_GOOGLE_USER_ID: ${ssm:/dev/develop-google-user-id} # Only exists in dev stage
