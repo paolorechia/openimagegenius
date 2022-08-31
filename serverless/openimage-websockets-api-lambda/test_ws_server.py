@@ -23,4 +23,4 @@ async def test_connection_replies():
                 await websocket.send(request_event)
                 response = await websocket.recv()
                 print("Got response:", response)
-                assert response == "Brocoli"
+                assert response == "Request Accepted."
