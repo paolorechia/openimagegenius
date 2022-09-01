@@ -101,7 +101,6 @@ def handler(event, context):
                 except Exception as excp:
                     logger.error("Exception: %s", str(excp))
                     traceback.print_exc(file=sys.stdout)
-
                 finally:
                     # If something goes wrong, reset node status, so it doesn't get locked out
                     # Sleep a bit to avoid concurrency issues
@@ -111,6 +110,10 @@ def handler(event, context):
                             api_token=node.api_token, status="ready")
                         raise ValueError(
                             f"Failed to run job for request_id: {request_id}")
+                    else:
+                        # Set gpu_user_id
+                        repository.set_unique_user_id_for_request(
+                            request_id=request_id, unique_user_id=node.unique_user_id)
     else:
         raise TypeError(
             f"request_type of type {request_type} is not supported by the fanout service")

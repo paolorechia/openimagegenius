@@ -1,3 +1,4 @@
+from lib2to3.pgen2.token import OP
 from pydantic import BaseModel
 from typing import Optional
 
@@ -26,6 +27,8 @@ class APITokenModel(BaseModel):
     unique_user_id: str
     connection_id: Optional[str] = ""
     node_status: Optional[str] = ""
+    update_time_iso: Optional[str] = ""
+    update_time_timestamp: Optional[str] = ""
 
 
 class RequestModel(BaseModel):
@@ -33,11 +36,15 @@ class RequestModel(BaseModel):
     requester_unique_user_id: str
     request_type: str
     data: str
-    status: str
+    request_status: str
     creation_time_iso: str
     creation_time_timestamp: str
     update_time_iso: str
     update_time_timestamp: str
+    gpu_user_id: Optional[str] = ""
+    s3_url: Optional[str] = ""
+    small_tumbnail_s3_path: Optional[str] = ""
+    medium_thumbnail_s3_path: Optional[str] = ""
 
 
 REQUEST_TYPES = frozenset(["prompt"])

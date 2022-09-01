@@ -52,12 +52,13 @@ provider:
           Resource:
             - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.databaseInfo.APITokenTable}"
             - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.databaseInfo.APITokenTable}/index/*"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.databaseInfo.requestTableName}"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.databaseInfo.requestTableName}/index/*"
         - Effect: Allow
           Action:
             - "s3:PutObject"
           Resource:
             - "arn:aws:s3:::${self:custom.generatedImagesBucket}/*"
-        
 
 functions:
   connectionHandler:
@@ -107,11 +108,24 @@ functions:
     # reservedConcurrency: 1
     timeout: 28
     events:
-      - sqs: 
+      - sqs:
           arn: ${cf:openimagegenius-websockets-api-dev.ImageProcessingQueue}
           batchSize: 1
     layers:
       - Ref: PythonRequirementsLambdaLayer
+
+  pushHandler:
+    handler: push_service.handler
+    timeout: 10
+    layers:
+      - Ref: PythonRequirementsLambdaLayer
+    events:
+      - s3:
+          bucket: ${self:custom.generatedImagesBucket}
+          event: s3:ObjectCreated:*
+          rules:
+            - suffix: .jpg
+          existing: true
 
 plugins:
   - serverless-domain-manager

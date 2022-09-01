@@ -76,7 +76,7 @@ def request_handler(event, context):
         request_id=request_id,
         request_type=request.request_type,
         data=request.data,
-        status="requested",
+        request_status="requested",
         creation_time_iso=creation_time_iso,
         creation_time_timestamp=creation_time_ts,
         update_time_iso=creation_time_iso,

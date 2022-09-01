@@ -1,3 +1,4 @@
+from .date_helper import get_iso_and_timestamp_now
 from .database_models import Metadata, RequestModel, UserModel, APITokenModel
 from typing import Optional, List
 import os
@@ -62,6 +63,49 @@ class Repository:
             Item=item
         )
         logger.info("Saved successfully!")
+
+    def set_unique_user_id_for_request(self, request_id: str, unique_user_id: str) -> None:
+        logger.info("Setting gpu_user_id: %s on request: %s",
+                    unique_user_id, request_id)
+
+        iso, ts = get_iso_and_timestamp_now()
+        self.ddb.update_item(
+            TableName=self.environment.request_table_name,
+            Key={
+                Metadata.RequestTable.primary_key: {
+                    "S": request_id
+                }
+            },
+            UpdateExpression="SET gpu_user_id = :gui, request_status = :rs, update_time_iso = :uti, update_time_timestamp = :utt",
+            ExpressionAttributeValues={
+                ":gui": {"S": unique_user_id},
+                ":rs": {"S": "assigned"},
+                ":uti": {"S": iso},
+                ":utt": {"S": ts},
+            }
+        )
+
+    def set_s3_path_for_request(self, request_id: str, s3_url: str) -> None:
+        logger.info("Setting s3_url: %s on request: %s",
+                    s3_url, request_id)
+
+        iso, ts = get_iso_and_timestamp_now()
+
+        self.ddb.update_item(
+            TableName=self.environment.request_table_name,
+            Key={
+                Metadata.RequestTable.primary_key: {
+                    "S": request_id
+                }
+            },
+            UpdateExpression="SET s3_url = :su, request_status = :rs, update_time_iso = :uti, update_time_timestamp = :utt",
+            ExpressionAttributeValues={
+                ":su": {"S": s3_url},
+                ":rs": {"S": "completed"},
+                ":uti": {"S": iso},
+                ":utt": {"S": ts},
+            }
+        )
 
     def get_user_by_unique_id(self, unique_user_id: str) -> Optional[UserModel]:
         logger.info("Requesting user by unique user id: %s", unique_user_id)
@@ -164,6 +208,8 @@ class Repository:
         logger.info("Setting status ID: %s on token: %s*****",
                     status, api_token[0:5])
 
+        iso, ts = get_iso_and_timestamp_now()
+
         self.ddb.update_item(
             TableName=self.environment.api_token_table_name,
             Key={
@@ -171,8 +217,10 @@ class Repository:
                     "S": api_token
                 }
             },
-            UpdateExpression="SET node_status = :sts",
+            UpdateExpression="SET node_status = :sts, update_time_iso = :uti, update_time_timestamp = :utt",
             ExpressionAttributeValues={
-                ":sts": {"S": status}
+                ":sts": {"S": status},
+                ":uti": {"S": iso},
+                ":utt": {"S": ts},
             }
         )

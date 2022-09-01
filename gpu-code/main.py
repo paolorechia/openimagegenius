@@ -255,7 +255,7 @@ class HuggingGPU:
     def gen_image_from_prompt(self, request_id: str, prompt: str, num_inference_steps=50, guidance_scale=8.0, num_images=1) -> str:
         """Returns filepath where file is saved"""
         logger.info("Inserting request into prompt queue: %s %s",
-                    (prompt, request_id))
+                    prompt, request_id)
         self.prompt_queue.put(
             (request_id, prompt, num_images,
              num_inference_steps, guidance_scale), block=True,
