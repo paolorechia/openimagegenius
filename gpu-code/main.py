@@ -12,6 +12,7 @@ from multiprocessing import Process, Queue
 
 import boto3
 import websockets
+from gpu_node_lib.websockets import WebsocketsClient
 
 MAX_MSG_SIZE = 2048
 
@@ -95,59 +96,6 @@ class Config:
             warnings.warn(
                 f"Malformed config file, using default settings (not recommended)")
         return UserConfig(vram=12)
-
-
-class WebsocketsClient:
-    def __init__(self, ws_connection):
-        self.ws_connection = ws_connection
-
-    async def send_initializing_state(self):
-        return await self.ws_connection.send(json.dumps({
-            "message_type": "status",
-            "data": {
-                "status": "initializing"
-            }
-        }))
-
-    async def send_busy_state(self):
-        return await self.ws_connection.send(json.dumps({
-            "message_type": "status",
-            "data": {
-                "status": "busy"
-            }
-        }))
-
-    async def send_ready_state(self, vram):
-        return await self.ws_connection.send(json.dumps({
-            "message_type": "status",
-            "data": {
-                "status": "ready",
-                "vram_in_gigabytes": vram,
-            }
-        }))
-
-    async def send_ack_message(self):
-        return await self.ws_connection.send(json.dumps({
-            "message_type": "acknowledge",
-        }))
-
-    async def send_error_message(self, error_message):
-        return await self.ws_connection.send(json.dumps({
-            "message_type": "error",
-            "data": error_message
-        }))
-
-    async def send_job_completed(self, request_id):
-        return await self.ws_connection.send(json.dumps({
-            "message_type": "job_completed",
-            "data": request_id
-        }))
-
-    async def send_job_failed(self, request_id):
-        return await self.ws_connection.send(json.dumps({
-            "message_type": "job_failed",
-            "data": request_id
-        }))
 
 
 @ dataclass
@@ -345,19 +293,21 @@ async def main():
             "Authorization": config.token
         }
     ) as ws:
+        ws_client = WebsocketsClient(ws)
+        logger.info("Starting WS Client...")
+
         await ws_client.send_initializing_state()
         logger.info("Loading GPU client...")
         gpu_client = HuggingGPU(config.hugging_face_token)
         logger.info("Starting Job Handler...")
         job_handler = JobHandler(gpu_client)
-        logger.info("Starting WS Client...")
-        ws_client = WebsocketsClient(ws)
         error_count = 0
-        async for message in ws:
-            logger.info("Sending ready state...")
-            await ws_client.send_ready_state(vram=config.user_config.vram)
-            logger.info("Ready! Waiting for message...")
+        logger.info("Sending ready state...")
+        await ws_client.send_ready_state(vram=config.user_config.vram)
+        logger.info("Ready! Waiting for message...")
 
+        async for message in ws:
+            logger.info("Received message: %s", message)
             parsed, type_, error_message = message_parser(message)
             await ws_client.send_ack_message()
             request_id = parsed.request_id
@@ -371,6 +321,9 @@ async def main():
             else:
                 await ws_client.send_job_failed(request_id)
                 error_count += 1
+            logger.info("Sending ready state...")
+            await ws_client.send_ready_state(vram=config.user_config.vram)
+            logger.info("Ready! Waiting for message...")
 
 
 if __name__ == "__main__":
