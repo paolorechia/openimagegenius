@@ -88,7 +88,7 @@ def handler(event, context):
                     )
                     payload = json.dumps({
                         "message_type": "request_prompt",
-                        "data": data,
+                        "prompt": data,
                         "request_id": request_id,
                         "s3_url": s3_upload_details["url"],
                         "s3_fields": s3_upload_details["fields"]

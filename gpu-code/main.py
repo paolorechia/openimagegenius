@@ -14,7 +14,7 @@ import requests
 import websockets
 from gpu_node_lib.websockets import WebsocketsClient
 
-MAX_MSG_SIZE = 2048
+MAX_MSG_SIZE = 4096
 
 
 def setup_logger():
@@ -133,11 +133,10 @@ def message_parser(message: str):
     # Parse specific message types
     try:
         if message_type == "request_prompt":
-            data = parsed["data"]
-            prompt = data["prompt"]
-            s3_url = data["s3_url"]
-            s3_fields = data["s3_fields"]
-            request_id = data["request_id"]
+            prompt = parsed["prompt"]
+            s3_url = parsed["s3_url"]
+            s3_fields = parsed["s3_fields"]
+            request_id = parsed["request_id"]
             return RequestImageGenFromPrompt(
                 request_id,
                 prompt,
@@ -247,15 +246,14 @@ class HuggingGPU:
                 grid = _image_grid(images, rows=1, cols=num_images)
                 filename = f"{request_id}.jpg"
 
-                grid.save(os.path.join(
-                    output_dir, filename))
+                filepath = os.path.join(output_dir, filename)
+                grid.save(filepath)
                 logger.info("Saved file: %s", filename)
                 logger.info("Sending filename through file queue...")
-                file_queue.put(filename, block=True)
+                file_queue.put(filepath, block=True)
 
     def gen_image_from_prompt(self, request_id: str, prompt: str, num_inference_steps=50, guidance_scale=8.0, num_images=1) -> str:
         """Returns filepath where file is saved"""
-        logger = setup_logger()
         logger.info("Inserting request into prompt queue: %s %s",
                     (prompt, request_id))
         self.prompt_queue.put(
@@ -275,13 +273,22 @@ class JobHandler:
                 request.request_id,
                 request.prompt
             )
-            if generated_image_filepath.split(".jpg")[0] != request.request_id:
+            if generated_image_filepath.split("/")[-1].split(".jpg")[0] != request.request_id:
                 raise TypeError(
                     f"Generated filename {generated_image_filepath} name does not match {request.request_id}. Results are probably inconsistent, aborting.")
-            # with open(generated_image, "rb"):
-            # TODO: upload to boto3 here
-            # url = "stub"
-            return True
+
+            logger.info("Opening file...")
+            # Demonstrate how another Python program can use the presigned URL to upload a file
+            with open(generated_image_filepath, 'rb') as f:
+                files = {'file': (generated_image_filepath, f)}
+                logger.info(
+                    "Uploading to S3 through presigned URL: %s", request.s3_url[0:32])
+                http_response = requests.post(
+                    request.s3_url, data=request.s3_fields, files=files)
+            # If successful, returns HTTP status code 204
+            logging.info(
+                f'File upload HTTP status code: {http_response.status_code}')
+            return http_response.status_code == 204
         return False
 
 
@@ -312,7 +319,10 @@ async def main():
         async for message in ws:
             logger.info("Received message: %s", message)
             parsed, type_, error_message = message_parser(message)
-            await ws_client.send_ack_message()
+            if error_message:
+                logger.error("Failed to parse message: %s", error_message)
+                await ws_client.send_error_message(error_message)
+
             request_id = parsed.request_id
             is_success = False
             try:
