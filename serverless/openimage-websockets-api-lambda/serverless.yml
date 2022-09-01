@@ -37,6 +37,9 @@ provider:
     API_TOKEN_UNIQUE_USER_ID_INDEX: ${self:custom.databaseInfo.APITokenUniqueUserIdIndex}
     # Others
     SQS_REQUEST_URL: ${self:custom.imageProcessingQueueUrl}
+    AUTHORIZER_STAGE: ${self:provider.stage}
+    API_ID: cwo3f8h30b
+
   iam:
     role:
       statements:
@@ -45,6 +48,9 @@ provider:
             - "dynamodb:PutItem"
             - "dynamodb:GetItem"
             - "dynamodb:Query"
+            - "dynamodb:UpdateItem"
+            - "dynamodb:ListStreams"
+            - "dynamodb:DescribeTable"
           Resource:
             - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.databaseInfo.requestTableName}"
             - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.databaseInfo.requestTableName}/index/*"
@@ -83,6 +89,26 @@ functions:
           route: request
           routeResponseSelectionExpression: $default
 
+  databaseUpdateHandler:
+    handler: database_streaming.update_handler
+    layers:
+      - Ref: PythonRequirementsLambdaLayer
+    events:
+      - stream:
+          type: dynamodb
+          arn: ${cf:openimagegenius-database-dev.RequestTableStreamArn}
+          batchSize: 1
+          filterPatterns:
+            - eventName: [MODIFY]
+              dynamodb:
+                NewImage:
+                  request_status:
+                    S: [completed]
+            - eventName: [MODIFY]
+              dynamodb:
+                NewImage:
+                  request_status:
+                    S: [failed]
 plugins:
   - serverless-domain-manager
   - serverless-python-requirements

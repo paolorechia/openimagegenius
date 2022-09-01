@@ -81,6 +81,8 @@ resources:
                 KeyType: HASH
             Projection:
               ProjectionType: ALL
+        StreamSpecification:
+          StreamViewType: NEW_IMAGE
 
     APITokenTable:
       Type: AWS::DynamoDB::Table
@@ -102,3 +104,13 @@ resources:
                 KeyType: HASH
             Projection:
               ProjectionType: ALL
+
+  Outputs:
+    RequestTableArn:
+      Export:
+        Name: request-table-${self:provider.stage}-arn
+      Value:
+        Fn::GetAtt: RequestTable.Arn
+    RequestTableStreamArn:
+      Value: 
+        Fn::GetAtt: RequestTable.StreamArn
