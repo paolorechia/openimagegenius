@@ -7,10 +7,20 @@ import boto3
 import pydantic
 from openimage_backend_lib import database_models as models
 from openimage_backend_lib import repository as repo_module
+import traceback
 
 from time import sleep
+import sys
 
-api_client = boto3.client('apigatewaymanagementapi')
+API_ID = os.environ["API_ID"]
+STAGE = os.environ["AUTHORIZER_STAGE"]
+REGION = os.environ["AWS_REGION"]
+s3_bucket = os.environ["S3_BUCKET"]
+
+api_endpoint = f"https://{API_ID}.execute-api.{REGION}.amazonaws.com/{STAGE}"
+api_client = boto3.client("apigatewaymanagementapi",
+                          endpoint_url=api_endpoint)
+
 dynamodb_client = boto3.client("dynamodb")
 s3_client = boto3.client("s3")
 
@@ -18,8 +28,6 @@ environment = repo_module.EnvironmentInfo()
 repository = repo_module.Repository(dynamodb_client, environment)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-
-s3_bucket = os.environ["S3_BUCKET"]
 
 
 def handler(event, context):
@@ -45,6 +53,8 @@ def handler(event, context):
         ]
     }
     """
+    logger.info("Event: %s", event)
+    logger.info("Using api endpoint: %s", api_endpoint)
     record = event["Records"][0]
     json_body = json.loads(record["body"])
     """
@@ -64,9 +74,9 @@ def handler(event, context):
         # Find an available node
         # Presign an S3 post URL
         # Send to node as a job
-        nodes = repository.scan_nodes()
+        nodes = repository.scan_api_tokens()
         for node in nodes:
-            if node.status == "ready":
+            if node.node_status == "ready":
                 # Found a node to use
                 has_job_started = False
                 repository.set_status_for_token(
@@ -90,12 +100,12 @@ def handler(event, context):
                     has_job_started = True
                 except Exception as excp:
                     logger.error("Exception: %s", str(excp))
+                    traceback.print_exc(file=sys.stdout)
+
                 finally:
                     # If something goes wrong, reset node status, so it doesn't get locked out
                     # Sleep a bit to avoid concurrency issues
                     if not has_job_started:
-                        logger.error(
-                            "Failed to run job for request_id: %s", str(excp))
                         sleep(1.0)
                         repository.set_status_for_token(
                             api_token=node.api_token, status="ready")

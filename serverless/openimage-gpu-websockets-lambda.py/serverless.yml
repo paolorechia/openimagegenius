@@ -36,6 +36,7 @@ provider:
     API_TOKEN_UNIQUE_USER_ID_INDEX: ${self:custom.databaseInfo.APITokenUniqueUserIdIndex}
     # Others
     AUTHORIZER_STAGE: ${self:provider.stage}
+    API_ID: cwo3f8h30b
     S3_BUCKET: ${self:custom.generatedImagesBucket}
 
   iam:
@@ -47,6 +48,7 @@ provider:
             - "dynamodb:UpdateItem"
             - "dynamodb:GetItem"
             - "dynamodb:Query"
+            - "dynamodb:Scan"
           Resource:
             - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.databaseInfo.APITokenTable}"
             - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.databaseInfo.APITokenTable}/index/*"
@@ -55,6 +57,7 @@ provider:
             - "s3:PutObject"
           Resource:
             - "arn:aws:s3:::${self:custom.generatedImagesBucket}/*"
+        
 
 functions:
   connectionHandler:
@@ -102,6 +105,7 @@ functions:
   fanoutHandler:
     handler: fanout_service.handler
     # reservedConcurrency: 1
+    timeout: 28
     events:
       - sqs: 
           arn: ${cf:openimagegenius-websockets-api-dev.ImageProcessingQueue}

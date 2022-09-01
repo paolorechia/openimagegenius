@@ -117,7 +117,8 @@ class Repository:
             TableName=self.environment.api_token_table_name,
             Select="ALL_ATTRIBUTES"
         )
-        nodes = response.get("items")
+        logger.info("Response: %s", response)
+        nodes = response.get("Items")
         if not nodes:
             return []
 
