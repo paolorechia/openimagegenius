@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Optional
 
 
 class Metadata:
@@ -19,9 +20,12 @@ class UserModel(BaseModel):
     creation_time_iso: str
     creation_time_timestamp: str
 
+
 class APITokenModel(BaseModel):
     api_token: str
     unique_user_id: str
+    node_status: Optional[str] = ""
+
 
 class RequestModel(BaseModel):
     request_id: str

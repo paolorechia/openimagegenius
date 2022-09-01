@@ -22,7 +22,8 @@ def setup_logger():
     handler = logging.StreamHandler(sys.stdout)
     handler.setLevel(logging.INFO)
 
-    formatter = logging.Formatter('%(asctime)s[%(levelname)s]:(%(name)s) - %(message)s')
+    formatter = logging.Formatter(
+        '%(asctime)s[%(levelname)s]:(%(name)s) - %(message)s')
     handler.setFormatter(formatter)
     logger.addHandler(handler)
     return logger
@@ -99,6 +100,22 @@ class Config:
 class WebsocketsClient:
     def __init__(self, ws_connection):
         self.ws_connection = ws_connection
+
+    async def send_initializing_state(self):
+        return await self.ws_connection.send(json.dumps({
+            "message_type": "status",
+            "data": {
+                "status": "initializing"
+            }
+        }))
+
+    async def send_busy_state(self):
+        return await self.ws_connection.send(json.dumps({
+            "message_type": "status",
+            "data": {
+                "status": "busy"
+            }
+        }))
 
     async def send_ready_state(self, vram):
         return await self.ws_connection.send(json.dumps({
@@ -262,7 +279,7 @@ class HuggingGPU:
 
         with autocast(device):
             input_prompt = ""
-            logger.info("Signaling that pipelien is ready...")
+            logger.info("Signaling that pipeline is ready...")
             readiness_queue.put(True, block=True)
             logger.info("Starting main diffusion loop...")
             while True:
@@ -328,6 +345,7 @@ async def main():
             "Authorization": config.token
         }
     ) as ws:
+        await ws_client.send_initializing_state()
         logger.info("Loading GPU client...")
         gpu_client = HuggingGPU(config.hugging_face_token)
         logger.info("Starting Job Handler...")
@@ -335,13 +353,11 @@ async def main():
         logger.info("Starting WS Client...")
         ws_client = WebsocketsClient(ws)
         error_count = 0
-        logger.info("Sending ready state...")
-        await ws_client.send_ready_state(vram=config.user_config.vram)
-        logger.info("Awaiting ACK...")
-        await ws.recv()
-        logger.info("Ready!")
-        logger.info("Waiting for message...")
         async for message in ws:
+            logger.info("Sending ready state...")
+            await ws_client.send_ready_state(vram=config.user_config.vram)
+            logger.info("Ready! Waiting for message...")
+
             parsed, type_, error_message = message_parser(message)
             await ws_client.send_ack_message()
             request_id = parsed.request_id

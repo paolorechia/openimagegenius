@@ -3,6 +3,7 @@ import os
 
 import boto3
 import pydash as _
+import json
 
 from openimage_backend_lib import repository as repo_module
 
@@ -14,6 +15,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 api_client = boto3.client('apigatewaymanagementapi')
+
 
 def connection(event, context):
     """"
@@ -49,9 +51,28 @@ def connection(event, context):
     api_token = _.get(event, "requestContext.authorizer.api_token")
     connection_id = _.get(event, "requestContext.connectionId")
     repository.set_connection_id_for_token(api_token, connection_id)
+    repository.set_status_for_token(api_token, "connecting")
     return {"statusCode": 200, "body": "Connected"}
+
 
 def default(event, context):
     print("Event", event)
     print("contex", context)
     return {"statusCode": 200, "body": "Default"}
+
+
+def disconnect(event, context):
+    print("Event", event)
+    api_token = _.get(event, "requestContext.authorizer.api_token")
+    repository.set_status_for_token(api_token, "disconnected")
+
+
+def status(event, context):
+    print("Event", event)
+    print("contex", context)
+    json_body = json.loads(event["body"])
+    status_ = json_body["data"]
+    api_token = _.get(event, "requestContext.authorizer.api_token")
+    repository.set_status_for_token(api_token, status_)
+
+    return {"statusCode": 200, "body": "Status Acknowledged."}

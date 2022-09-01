@@ -144,3 +144,20 @@ class Repository:
                 ":cid": {"S": connection_id}
             }
         )
+
+    def set_status_for_token(self, api_token: str, status):
+        logger.info("Setting status ID: %s on token: %s*****",
+                    status, api_token[0:5])
+
+        self.ddb.update_item(
+            TableName=self.environment.api_token_table_name,
+            Key={
+                Metadata.APITokenTable.primary_key: {
+                    "S": api_token
+                }
+            },
+            UpdateExpression="SET node_status = :sts",
+            ExpressionAttributeValues={
+                ":sts": {"S": status}
+            }
+        )

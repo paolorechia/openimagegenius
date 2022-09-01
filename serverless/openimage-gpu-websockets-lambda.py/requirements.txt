@@ -1,3 +1,2 @@
 pydantic==1.10.0
 pydash==5.1.0
-openimage_backend_lib
