@@ -1,25 +1,34 @@
+from PIL import Image
+from torch import autocast
+from diffusers import StableDiffusionPipeline
 import asyncio
 import json
 import logging
 import os
 import sys
 import warnings
-from concurrent.futures.process import _threads_wakeups
 from dataclasses import dataclass
+from multiprocessing import Process, Queue
 
 import boto3
 import websockets
 
 MAX_MSG_SIZE = 2048
 
-logger = logging.getLogger(__name__)
 
-handler = logging.StreamHandler(sys.stdout)
-handler.setLevel(logging.INFO)
+def setup_logger():
+    logger = logging.getLogger()
 
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-handler.setFormatter(formatter)
-logger.addHandler(handler)
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setLevel(logging.INFO)
+
+    formatter = logging.Formatter('%(asctime)s[%(levelname)s]:(%(name)s) - %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    return logger
+
+
+logger = setup_logger()
 
 
 @dataclass
@@ -32,6 +41,8 @@ class Config:
     API_FILENAME = "api_token.json"
     CONFIG_DIR = os.path.join(os.environ["HOME"], ".openimagegenius")
     CONFIG_FILE = "client-config.json"
+    HUGGING_FACE_CONFIG_DIR = os.path.join(os.environ["HOME"], ".huggingface")
+    HUGGING_FACE_TOKEN_FILENAME = "token"
 
     def __init__(self) -> None:
         self.stage = "dev"
@@ -39,18 +50,33 @@ class Config:
             "dev": "wss://dev.ws-gpus.openimagegenius.com"
         }
         self.ws_endpoint = self.available_endpoints[self.stage]
+        token_filepath = os.path.join(Config.CONFIG_DIR, Config.API_FILENAME)
+        hugging_face_token_filepath = os.path.join(
+            Config.HUGGING_FACE_CONFIG_DIR, "token")
+
         try:
-            self.token = self.load_api_token()
+            self.token = self.load_api_token(token_filepath)
         except FileNotFoundError:
             sys.exit(
-                f"Please setup your {Config.API_FILENAME} in your home directory.")
+                f"API key not found. Please create a file with it at {token_filepath}")
+        try:
+            self.hugging_face_token = self.load_hugging_face_token(
+                hugging_face_token_filepath)
+        except FileNotFoundError:
+            sys.exit(
+                f"Huggingface token not found. Please create a file with it at {hugging_face_token_filepath}."
+            )
         self.user_config: UserConfig = self.load_config()
 
-    def load_api_token(self) -> str:
-        token_filepath = os.path.join(Config.CONFIG_DIR, Config.API_FILENAME)
+    def load_api_token(self, token_filepath) -> str:
         with open(token_filepath, "r") as fp:
             j = json.load(fp)
         return j["api_token"]
+
+    def load_hugging_face_token(self, filepath) -> str:
+        # get your token at https://huggingface.co/settings/tokens
+        with open(filepath, "r") as fp:
+            return fp.read().strip()
 
     def load_config(self) -> UserConfig:
         config_filepath = os.path.join(Config.CONFIG_DIR, Config.CONFIG_FILE)
@@ -107,7 +133,7 @@ class WebsocketsClient:
         }))
 
 
-@dataclass
+@ dataclass
 class RequestImageGenFromPrompt:
     request_id: str
     prompt: str
@@ -160,14 +186,115 @@ def message_parser(message: str):
 
 
 class HuggingGPU:
-    def __init__(self):
-        # Load model here etc
-        # TODO: insert actual implementation
-        pass
+    def __init__(self, hugging_face_token):
+        model_id = "CompVis/stable-diffusion-v1-4"
+        output_dir = os.path.join(os.environ["HOME"], ".gpu-node-output")
+        prompt_queue = Queue()
+        file_queue = Queue()
+        readiness_queue = Queue()
 
-    def gen_image_from_prompt(prompt: str) -> str:
+        diffusion_loop = Process(
+            target=HuggingGPU.launch_diffusion_loop,
+            args=(
+                model_id,
+                hugging_face_token,
+                output_dir,
+                prompt_queue,
+                file_queue,
+                readiness_queue
+            ))
+        self.model_id = model_id
+        self.output_dir = output_dir
+        self.prompt_queue = prompt_queue
+        self.file_queue = file_queue
+        self.readiness_queue = readiness_queue
+        self.diffusion_loop = diffusion_loop
+        self.diffusion_loop.start()
+
+        # Wait until readiness is posted
+        init_timeout_in_seconds = 600
+        ready = self.readiness_queue.get(
+            block=True, timeout=init_timeout_in_seconds)
+        if not ready:
+            raise RuntimeError(
+                f"Diffusion pipeline failed to initialize within {init_timeout_in_seconds} seconds.")
+
+    @staticmethod
+    def launch_diffusion_loop(
+        model_id,
+        hugging_face_token,
+        output_dir,
+        prompt_queue,
+        file_queue,
+        readiness_queue,
+    ):
+        def _image_grid(imgs, rows, cols):
+            assert len(imgs) == rows * cols
+            w, h = imgs[0].size
+            grid = Image.new("RGB", size=(cols * w, rows * h))
+
+            for i, img in enumerate(imgs):
+                grid.paste(img, box=(i % cols * w, i // cols * h))
+            return grid
+        logger = setup_logger()
+        logger.info("Launching pipeline with args")
+        logger.info("model_id: %s", model_id)
+        logger.info("hugging_face_token: %s", hugging_face_token)
+        logger.info("output_dir: %s", output_dir)
+        logger.info("prompt_queue: %s", prompt_queue)
+        logger.info("file_queue: %s", file_queue)
+        logger.info("readiness_queue: %s", readiness_queue)
+
+        logger.info("Creating output directory...")
+
+        try:
+            os.makedirs(output_dir)
+        except FileExistsError:
+            pass
+        logger.info("Results will be saved to: %s", output_dir)
+
+        logger.info("Launching diffusion pipeline...")
+        pipe = StableDiffusionPipeline.from_pretrained(
+            model_id, use_auth_token=hugging_face_token
+        )
+        device = "cuda"
+        pipe = pipe.to(device)
+
+        with autocast(device):
+            input_prompt = ""
+            logger.info("Signaling that pipelien is ready...")
+            readiness_queue.put(True, block=True)
+            logger.info("Starting main diffusion loop...")
+            while True:
+                logger.info("Fetching request from queue...")
+                request_id, input_prompt, num_images, num_inference_steps, guidance_scale = prompt_queue.get(
+                    block=True)
+                logger.info("Got request: %s (%s)", input_prompt, request_id)
+                prompt = [input_prompt] * num_images
+                images = pipe(prompt, num_inference_steps=num_inference_steps,
+                              guidance_scale=guidance_scale)["sample"]
+                logger.info("Processed request: %s (%s)",
+                            input_prompt, request_id)
+
+                grid = _image_grid(images, rows=1, cols=num_images)
+                filename = f"{request_id}.jpg"
+
+                grid.save(os.path.join(
+                    output_dir, filename))
+                logger.info("Saved file: %s", filename)
+                logger.info("Sending filename through file queue...")
+                file_queue.put(filename, block=True)
+
+    def gen_image_from_prompt(self, request_id: str, prompt: str, num_inference_steps=50, guidance_scale=8.0, num_images=1) -> str:
         """Returns filepath where file is saved"""
-        # TODO: insert actual implementation
+        logger = setup_logger()
+        logger.info("Inserting request into prompt queue: %s %s",
+                    (prompt, request_id))
+        self.prompt_queue.put(
+            (request_id, prompt, num_images,
+             num_inference_steps, guidance_scale), block=True,
+        )
+        return self.file_queue.get(block=True)
 
 
 class JobHandler:
@@ -176,7 +303,13 @@ class JobHandler:
 
     def handle_job(self, request: RequestImageGenFromPrompt) -> bool:
         if type(request) == RequestImageGenFromPrompt:
-            generated_image = self.gpu_client(request.prompt)
+            generated_image_filepath = self.gpu_client.gen_image_from_prompt(
+                request.request_id,
+                request.prompt
+            )
+            if generated_image_filepath.split(".jpg")[0] != request.request_id:
+                raise TypeError(
+                    f"Generated filename {generated_image_filepath} name does not match {request.request_id}. Results are probably inconsistent, aborting.")
             # with open(generated_image, "rb"):
             # TODO: upload to boto3 here
             # url = "stub"
@@ -196,7 +329,7 @@ async def main():
         }
     ) as ws:
         logger.info("Loading GPU client...")
-        gpu_client = HuggingGPU()
+        gpu_client = HuggingGPU(config.hugging_face_token)
         logger.info("Starting Job Handler...")
         job_handler = JobHandler(gpu_client)
         logger.info("Starting WS Client...")
@@ -210,21 +343,18 @@ async def main():
         logger.info("Waiting for message...")
         async for message in ws:
             parsed, type_, error_message = message_parser(message)
-            if error_message:
-                await ws_client.send_error_message(error_message)
+            await ws_client.send_ack_message()
+            request_id = parsed.request_id
+            is_success = False
+            try:
+                is_success = job_handler.handle_job(parsed)
+            except Exception as excp:
+                warnings.warn(f"Job failed: {str(excp)}")
+            if is_success:
+                await ws_client.send_job_completed(request_id)
             else:
-                await ws_client.send_ack_message()
-                request_id = parsed.request_id
-                is_success = False
-                try:
-                    is_success = job_handler.handle_job(parsed)
-                except Exception as excp:
-                    warnings.warn(f"Job failed: {str(excp)}")
-                if is_success:
-                    await ws_client.send_job_completed(request_id)
-                else:
-                    await ws_client.send_job_failed(request_id)
-                    error_count += 1
+                await ws_client.send_job_failed(request_id)
+                error_count += 1
 
 
 if __name__ == "__main__":
