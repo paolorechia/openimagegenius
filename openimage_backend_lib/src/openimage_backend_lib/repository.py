@@ -1,6 +1,5 @@
-from enum import unique
 from .database_models import Metadata, RequestModel, UserModel, APITokenModel
-from typing import Optional
+from typing import Optional, List
 import os
 import logging
 
@@ -111,6 +110,21 @@ class Repository:
             }
         )
         logger.info("User saved")
+
+    def scan_api_tokens(self) -> List[APITokenModel]:
+        logger.info("Scanning gpu nodes")
+        response = self.ddb.scan(
+            TableName=self.environment.api_token_table_name,
+            Select="ALL_ATTRIBUTES"
+        )
+        nodes = response.get("items")
+        if not nodes:
+            return []
+
+        return [
+            APITokenModel(**flatten_response(node))
+            for node in nodes
+        ]
 
     def get_user_by_api_token(self, api_token: str) -> Optional[APITokenModel]:
         logger.info("Requesting gpu user by api token: %s*****",

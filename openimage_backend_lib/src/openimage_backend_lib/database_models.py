@@ -24,6 +24,7 @@ class UserModel(BaseModel):
 class APITokenModel(BaseModel):
     api_token: str
     unique_user_id: str
+    connection_id: Optional[str] = ""
     node_status: Optional[str] = ""
 
 

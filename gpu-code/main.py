@@ -10,7 +10,7 @@ import warnings
 from dataclasses import dataclass
 from multiprocessing import Process, Queue
 
-import boto3
+import requests
 import websockets
 from gpu_node_lib.websockets import WebsocketsClient
 
@@ -98,11 +98,12 @@ class Config:
         return UserConfig(vram=12)
 
 
-@ dataclass
+@dataclass
 class RequestImageGenFromPrompt:
     request_id: str
     prompt: str
-    s3_presigned_url: str
+    s3_url: str
+    s3_fields: dict
 
 
 def message_parser(message: str):
@@ -134,12 +135,14 @@ def message_parser(message: str):
         if message_type == "request_prompt":
             data = parsed["data"]
             prompt = data["prompt"]
-            s3_presigned_url = data["s3_presigned_url"]
+            s3_url = data["s3_url"]
+            s3_fields = data["s3_fields"]
             request_id = data["request_id"]
             return RequestImageGenFromPrompt(
                 request_id,
                 prompt,
-                s3_presigned_url
+                s3_url,
+                s3_fields
             ), RequestImageGenFromPrompt, None
 
         elif message_type == "heartbeat":

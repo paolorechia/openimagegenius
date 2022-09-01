@@ -36,6 +36,7 @@ provider:
     API_TOKEN_UNIQUE_USER_ID_INDEX: ${self:custom.databaseInfo.APITokenUniqueUserIdIndex}
     # Others
     AUTHORIZER_STAGE: ${self:provider.stage}
+    S3_BUCKET: ${self:custom.generatedImagesBucket}
 
   iam:
     role:
@@ -49,6 +50,11 @@ provider:
           Resource:
             - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.databaseInfo.APITokenTable}"
             - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.databaseInfo.APITokenTable}/index/*"
+        - Effect: Allow
+          Action:
+            - "s3:PutObject"
+          Resource:
+            - "arn:aws:s3:::${self:custom.generatedImagesBucket}/*"
 
 functions:
   connectionHandler:
@@ -93,14 +99,17 @@ functions:
     layers:
       - Ref: PythonRequirementsLambdaLayer
 
+  fanoutHandler:
+    handler: fanout_service.handler
+    events:
+      - sqs: ${cf:openimagegenius-websockets-api.ImageProcessingQueue}
+
 plugins:
   - serverless-domain-manager
   - serverless-python-requirements
 
 custom:
-  authorizerArn: ${cf:openimagegenius-auth-dev.AuthorizerLambdaFunction}
-  imageProcessingQueueName: image-processing-${self:provider.stage}
-  imageProcessingQueueUrl: !Ref ImageProcessingQueue
+  generatedImagesBucket: generated-images-${self:provider.stage}
   customDomain:
     domainName: ${self:provider.stage}.ws-gpus.openimagegenius.com
     stage: ${self:provider.stage}
@@ -113,3 +122,10 @@ custom:
     layer: true
     usePipenv: false
   databaseInfo: ${file(../database/serverless.yml):custom}
+
+resources:
+  Resources:
+    GeneratedImagesBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.generatedImagesBucket}
