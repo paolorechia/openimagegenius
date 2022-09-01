@@ -101,15 +101,20 @@ functions:
 
   fanoutHandler:
     handler: fanout_service.handler
+    # reservedConcurrency: 1
     events:
-      - sqs: ${cf:openimagegenius-websockets-api.ImageProcessingQueue}
+      - sqs: 
+          arn: ${cf:openimagegenius-websockets-api-dev.ImageProcessingQueue}
+          batchSize: 1
+    layers:
+      - Ref: PythonRequirementsLambdaLayer
 
 plugins:
   - serverless-domain-manager
   - serverless-python-requirements
 
 custom:
-  generatedImagesBucket: generated-images-${self:provider.stage}
+  generatedImagesBucket: open-image-genius-generated-images-${self:provider.stage}
   customDomain:
     domainName: ${self:provider.stage}.ws-gpus.openimagegenius.com
     stage: ${self:provider.stage}

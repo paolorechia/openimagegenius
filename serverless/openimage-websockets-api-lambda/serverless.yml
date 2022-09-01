@@ -58,15 +58,14 @@ functions:
   connectionHandler:
     handler: event_handlers.connection
     events:
-      - websocket: 
+      - websocket:
           route: $connect
           authorizer:
             arn: ${self:custom.authorizerArn}
             identitySource:
-              - 'route.request.header.Authorization'
+              - "route.request.header.Authorization"
     layers:
       - Ref: PythonRequirementsLambdaLayer
-
 
   defaultHandler:
     handler: event_handlers.default
@@ -74,7 +73,7 @@ functions:
       - websocket: $default #simple event definition without extra route property
     layers:
       - Ref: PythonRequirementsLambdaLayer
-	
+
   requestHandler:
     handler: event_handlers.request
     layers:
@@ -109,17 +108,24 @@ resources:
   Resources:
     ImageProcessingQueueDLQ:
       Type: AWS::SQS::Queue
-      Properties: 
+      Properties:
         DelaySeconds: 0
         QueueName: image-processing-dead-letter-queue-${self:provider.stage}
         VisibilityTimeout: 30
 
     ImageProcessingQueue:
       Type: AWS::SQS::Queue
-      Properties: 
+      Properties:
         DelaySeconds: 0
         QueueName: ${self:custom.imageProcessingQueueName}
         RedrivePolicy:
           deadLetterTargetArn: !GetAtt ImageProcessingQueueDLQ.Arn
           maxReceiveCount: 3
         VisibilityTimeout: 30
+
+  Outputs:
+    ImageProcessingQueue:
+      Export:
+        Name: image-processing-queue-${self:provider.stage}-arn
+      Value:
+        Fn::GetAtt: ImageProcessingQueue.Arn

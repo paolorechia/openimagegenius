@@ -4,6 +4,7 @@ import os
 
 import boto3
 
+import pydantic
 from openimage_backend_lib import database_models as models
 from openimage_backend_lib import repository as repo_module
 
@@ -44,7 +45,8 @@ def handler(event, context):
         ]
     }
     """
-    json_body = json.loads(event["body"])
+    record = event["Records"][0]
+    json_body = json.loads(record["body"])
     """
     This should be the expected format for json_body: {
         "request_type": request.request_type,
