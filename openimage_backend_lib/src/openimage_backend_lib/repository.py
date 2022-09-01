@@ -155,6 +155,25 @@ class Repository:
         )
         logger.info("User saved")
 
+    def set_connection_id_for_user(self, unique_user_id: str, connection_id: str) -> None:
+        logger.info("Setting connection_id: %s for user: %s",
+                    connection_id, unique_user_id)
+
+        iso, ts = get_iso_and_timestamp_now()
+
+        self.ddb.update_item(
+            TableName=self.environment.user_table_name,
+            Key={
+                Metadata.UserTable.primary_key: {
+                    "S": unique_user_id
+                }
+            },
+            UpdateExpression="SET connection_id = :coni",
+            ExpressionAttributeValues={
+                ":coni": {"S": connection_id},
+            }
+        )
+
     def scan_api_tokens(self) -> List[APITokenModel]:
         logger.info("Scanning gpu nodes")
         response = self.ddb.scan(

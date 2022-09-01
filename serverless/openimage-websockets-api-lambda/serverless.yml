@@ -16,6 +16,8 @@ package:
     - "!test_requirements.txt"
     - "!pytest.ini"
     - "test_ws_server.py"
+    - "!.requirements.zip"
+
 
 provider:
   name: aws

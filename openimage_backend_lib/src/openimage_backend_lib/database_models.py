@@ -20,6 +20,7 @@ class UserModel(BaseModel):
     user_google_email: str
     creation_time_iso: str
     creation_time_timestamp: str
+    connection_id: Optional[str] = ""
 
 
 class APITokenModel(BaseModel):

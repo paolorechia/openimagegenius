@@ -68,3 +68,9 @@ def update_handler(event, context):
     records = event["Records"]
     for record in records:
         logger.info("Record: %s", record)
+        # TODO, finish this part
+        # payload = "Job completed: %s"
+        # api_client.post_to_connection(
+        #     Data=payload,
+        #     ConnectionId=connection_id
+        # )

@@ -10,6 +10,7 @@ package:
     - "!.gitignore"
     - "!package.json"
     - "!package-lock.json"
+    - "!.requirements.zip"
 
 provider:
   name: aws
@@ -24,6 +25,7 @@ provider:
           Action:
             - "dynamodb:PutItem"
             - "dynamodb:GetItem"
+            - "dynamodb:UpdateItem"
             - "dynamodb:Query"
           Resource:
             - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.databaseInfo.userTableName}"

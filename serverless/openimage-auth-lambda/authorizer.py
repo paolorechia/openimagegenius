@@ -16,7 +16,6 @@ dynamodb_client = boto3.client("dynamodb")
 environment = repo_module.EnvironmentInfo()
 repository = repo_module.Repository(dynamodb_client, environment)
 
-print("Loaded library built locally, congrats!")
 client_ids = {
     "dev": os.environ["GOOGLE_OAUTH_APP_ID"]
 }
@@ -41,6 +40,10 @@ def handler(event, context):
         if not token:
             # In websockets API Gateway, we need to inspect the header
             token = event.get("headers", {}).get("Authorization")
+            connection_id = event.get(
+                "requestContext", {}).get("connectionId")
+
+        logger.info("Connetion ID: %s", connection_id)
 
         logger.info("Token: %s",  token)
         logger.info("Token type: %s", type(token))
@@ -70,6 +73,10 @@ def handler(event, context):
         if not user:
             raise IndexError(
                 f"User by google user id {google_user_id} not found.")
+        if connection_id:
+            repository.set_connection_id_for_user(
+                user.unique_user_id, connection_id)
+
     except Exception as excp:
         logger.info("Caught exception: %s", str(excp))
         deny_policy = authorizer_helper.create_policy(
