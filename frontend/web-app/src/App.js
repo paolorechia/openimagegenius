@@ -8,9 +8,32 @@ import SideMenu from './Components/SideMenu';
 import NotificationMenu from './Components/NotificationMenu';
 import ImageDetailScreen from './Screens/ImageDetailScreen';
 import PromptScreen from './Screens/PromptScreen';
+import WebsocketManager from './Components/WebsocketManager';
 
-const drawerWidth = 240;
+let websocket = null;
+if (websocket === null) {
+  websocket = WebsocketManager()
+  console.log(websocket)
+}
+websocket.addEventListener("error", (error) => {
+  console.error(error)
+})
+websocket.addEventListener("close", (event) => {
+  console.log("Close event", event)
+})
 
+websocket.addEventListener('open', (event) => {
+  console.log("Opened", event)
+  websocket.send(
+    JSON.stringify(
+      {
+        "action": "request",
+        "request_type": "prompt",
+        "data": "An astronaut dog"
+      }
+    )
+  )
+})
 
 function App() {
   const [selectedScreen, setScreen] = useState("prompt")
@@ -29,7 +52,7 @@ function App() {
       >
         <Toolbar />
         {
-          selectedScreen == "prompt"
+          selectedScreen === "prompt"
             ? <PromptScreen />
             : <ImageDetailScreen />
         }

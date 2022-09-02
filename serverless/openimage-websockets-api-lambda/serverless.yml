@@ -68,10 +68,14 @@ functions:
     events:
       - websocket:
           route: $connect
-          authorizer:
-            arn: ${self:custom.authorizerArn}
-            identitySource:
-              - "route.request.header.Authorization"
+    layers:
+      - Ref: PythonRequirementsLambdaLayer
+
+  authorizationHandler:
+    handler: event_handlers.authorization
+    events:
+      - websocket:
+          route: authorize
     layers:
       - Ref: PythonRequirementsLambdaLayer
 

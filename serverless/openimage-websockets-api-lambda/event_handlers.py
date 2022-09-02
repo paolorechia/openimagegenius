@@ -96,3 +96,8 @@ def request(event, context):
     }
     """
     return request_handler(event, context)
+
+
+def authorization(event, context):
+    print("Requested authorization?")
+    print(event)
