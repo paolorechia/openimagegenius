@@ -14,11 +14,13 @@ class EnvironmentInfo:
         self.user_table_name = os.environ["USER_TABLE_NAME"]
         self.request_table_name = os.environ["REQUEST_TABLE_NAME"]
         self.api_token_table_name = os.environ["API_TOKEN_TABLE_NAME"]
+        self.connection_table = os.environ["CONNECTION_TABLE_NAME"]
         # indices
         self.google_user_id_index_name = os.environ["GOOGLE_USER_ID_INDEX_NAME"]
         self.user_google_email_index_name = os.environ["USER_GOOGLE_EMAIL_INDEX_NAME"]
         self.request_unique_user_id_index = os.environ["REQUEST_UNIQUE_USER_ID_INDEX"]
         self.api_token_unique_user_id_index = os.environ["API_TOKEN_UNIQUE_USER_ID_INDEX"]
+        self.connection_unique_user_id_index = os.environ["CONNECTION_UNIQUE_USER_ID_INDEX"]
 
 
 def flatten_response(dynamodb_dict_response):

@@ -13,6 +13,14 @@ class Metadata:
     class APITokenTable:
         primary_key = "api_token"
 
+    class ConnectionTable:
+        primary_key = "connection_id"
+
+
+class ConnectionModel(BaseModel):
+    connection_id: str
+    authorized: Optional[str] = "unauthorized"
+    unique_user_id: Optional[str] = ""
 
 class UserModel(BaseModel):
     unique_user_id: str
@@ -21,6 +29,7 @@ class UserModel(BaseModel):
     creation_time_iso: str
     creation_time_timestamp: str
     connection_id: Optional[str] = ""
+    authorized: Optional[str] = "unauthorized"
 
 
 class APITokenModel(BaseModel):

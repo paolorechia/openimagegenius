@@ -30,6 +30,10 @@ custom:
   APITokenTable: api-token-table-${self:provider.stage}
   APITokenUniqueUserIdIndex: api-token-unique-user-id-index-${self:provider.stage}
 
+  # Connection Table
+  connectionTable: connection-table-${self:provider.stage}
+  connectionUniqueUserIdIndex: connection-unique-user-id-index-${self:provider.stage}
+
 resources:
   Resources:
     UserTable:
@@ -105,6 +109,27 @@ resources:
             Projection:
               ProjectionType: ALL
 
+    ConnectionTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.connectionTable}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: connection_id
+            AttributeType: S
+          - AttributeName: unique_user_id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: connection_id
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: ${self:custom.connectionUniqueUserIdIndex}
+            KeySchema:
+              - AttributeName: unique_user_id
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+
   Outputs:
     RequestTableArn:
       Export:
@@ -112,5 +137,5 @@ resources:
       Value:
         Fn::GetAtt: RequestTable.Arn
     RequestTableStreamArn:
-      Value: 
+      Value:
         Fn::GetAtt: RequestTable.StreamArn

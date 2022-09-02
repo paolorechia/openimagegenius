@@ -32,11 +32,13 @@ provider:
     USER_TABLE_NAME: ${self:custom.databaseInfo.userTableName}
     REQUEST_TABLE_NAME: ${self:custom.databaseInfo.requestTableName}
     API_TOKEN_TABLE_NAME: ${self:custom.databaseInfo.APITokenTable}
+    CONNECTION_TABLE_NAME: ${self:custom.databaseInfo.connectionTableName}
     # Indices
     GOOGLE_USER_ID_INDEX_NAME: ${self:custom.databaseInfo.googleUserIdIndexName}
     USER_GOOGLE_EMAIL_INDEX_NAME: ${self:custom.databaseInfo.userGoogleEmailIndexName}
     REQUEST_UNIQUE_USER_ID_INDEX: ${self:custom.databaseInfo.requestUniqueUserIdIndex}
     API_TOKEN_UNIQUE_USER_ID_INDEX: ${self:custom.databaseInfo.APITokenUniqueUserIdIndex}
+    CONNECTION_UNIQUE_USER_ID_INDEX: ${self:custom.databaseInfo.connectcionUniqueUserIdIndex}
     # Others
     SQS_REQUEST_URL: ${self:custom.imageProcessingQueueUrl}
     AUTHORIZER_STAGE: ${self:provider.stage}

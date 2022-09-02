@@ -43,7 +43,7 @@ def handler(event, context):
             connection_id = event.get(
                 "requestContext", {}).get("connectionId")
 
-        logger.info("Connetion ID: %s", connection_id)
+        logger.info("Connection ID: %s", connection_id)
 
         logger.info("Token: %s",  token)
         logger.info("Token type: %s", type(token))
