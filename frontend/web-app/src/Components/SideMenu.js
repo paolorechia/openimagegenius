@@ -11,7 +11,15 @@ import Divider from '@mui/material/Divider';
 
 const drawerWidth = 240;
 
-export default function SideMenu() {
+export default function SideMenu(props) {
+    function setPromptScreen() {
+        props.setScreenCallback("prompt")
+    }
+
+    function setImageDetailsScreen() {
+        props.setScreenCallback("image-details")
+    }
+
     return (
         <Drawer
             sx={{
@@ -28,16 +36,28 @@ export default function SideMenu() {
             <Toolbar />
             <Divider />
             <List>
-                {['Prompt', 'Created'].map((text, index) => (
-                    <ListItem key={text} disablePadding>
-                        <ListItemButton>
-                            <ListItemIcon>
-                                {index % 2 === 0 ? <ChatBubbleOutlineTwoToneIcon /> : <ImageTwoToneIcon />}
-                            </ListItemIcon>
-                            <ListItemText primary={text} />
-                        </ListItemButton>
-                    </ListItem>
-                ))}
+                <ListItem key="Prompt" disablePadding onClick={setPromptScreen}>
+                    <ListItemButton>
+                        <ListItemIcon>
+                            <ChatBubbleOutlineTwoToneIcon />
+                        </ListItemIcon>
+                        {props.selectedScreen === "prompt"
+                            ? <ListItemText secondary="Prompt" />
+                            : <ListItemText primary="Prompt" />
+                        }
+                    </ListItemButton>
+                </ListItem>
+                <ListItem key="Image Details" disablePadding onClick={setImageDetailsScreen}>
+                    <ListItemButton>
+                        <ListItemIcon>
+                            <ImageTwoToneIcon />
+                        </ListItemIcon>
+                        {props.selectedScreen === "image-details"
+                            ? <ListItemText secondary="Image Details" />
+                            : <ListItemText primary="Image Details" />
+                        }
+                    </ListItemButton>
+                </ListItem>
             </List>
         </Drawer>
     )
