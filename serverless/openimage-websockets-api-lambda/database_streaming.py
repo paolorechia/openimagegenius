@@ -85,7 +85,7 @@ def update_handler(event, context):
                     "message_type": "job_complete",
                     "data": {
                         "s3_url": s3_url,
-                        "prompt": reader.get("prompt"),
+                        "prompt": reader.get("data"),
                         "update_time_iso": reader.get("update_time_iso"),
                         "request_id": reader.get("request_id"),
                     }

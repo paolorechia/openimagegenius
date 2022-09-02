@@ -45,6 +45,13 @@ class Request(BaseModel):
         return v
 
 
+def build_error_message_body(error):
+    return json.dumps({
+        "message_type": "error",
+        "data": "error"
+    })
+
+
 def request_handler(event, context):
     """Example request
     {
@@ -80,7 +87,7 @@ def request_handler(event, context):
     try:
         json_body = json.loads(event["body"])
     except json.JSONDecodeError:
-        return {"statusCode": 400, "body": "mal-formed JSON"}
+        return {"statusCode": 400, "body": build_error_message_body("mal-formed JSON")}
 
     connection_id = _.get(event, "requestContext.connectionId")
 
@@ -88,7 +95,7 @@ def request_handler(event, context):
         connection_id)
 
     if not connection or connection.authorized != "authorized":
-        return {"statusCode": 401, "body": "You're not authorized. Please send your valid token first."}
+        return {"statusCode": 401, "body": build_error_message_body("You're not authorized. Please send your valid token first.")}
 
     try:
         request = Request(
@@ -98,13 +105,13 @@ def request_handler(event, context):
         )
     except ValidationError as excp:
         logger.info("Bad request")
-        return {"statusCode": 400, "body": str(excp)}
+        return {"statusCode": 400, "body": build_error_message_body(str(excp))}
 
     request_id = str(uuid4())
     maybe_existing_request = repository.get_request(request_id)
     if maybe_existing_request:
         logger.info("Conflict")
-        return {"statusCode": 409, "body": "Request ID conflict, try again."}
+        return {"statusCode": 409, "body": build_error_message_body("Request ID conflict, try again.")}
 
     creation_time = datetime.now(tz=timezone.utc)
     creation_time_iso = creation_time.isoformat()
@@ -134,4 +141,11 @@ def request_handler(event, context):
         }),
     )
     logger.info("Success")
-    return {"statusCode": 200, "body": "Request Accepted."}
+    return {
+        "statusCode": 200,
+        "body": json.dumps({
+            "message_type": "request_accepted",
+            "data": {
+                "request_id": request_id,
+            }
+        })}

@@ -24,16 +24,23 @@ websocket.addEventListener("close", (event) => {
 
 websocket.addEventListener("message", (event) => {
   console.log("Received message ", event)
-  if (event.data === "authorized") {
-    websocket.send(
-      JSON.stringify(
-        {
-          "action": "request",
-          "request_type": "prompt",
-          "data": "A cowboy cat"
-        }
+  const obj = JSON.parse(event.data)
+  console.log("parsed", obj)
+  if (obj.message_type === "authorization") {
+    if (obj.data === "unauthorized") {
+      console.error("You suck! oops")
+    }
+    if (obj.data === "authorized") {
+      websocket.send(
+        JSON.stringify(
+          {
+            "action": "request",
+            "request_type": "prompt",
+            "data": "A cowboy cat"
+          }
+        )
       )
-    )
+    }
   }
 })
 websocket.addEventListener('open', (event) => {

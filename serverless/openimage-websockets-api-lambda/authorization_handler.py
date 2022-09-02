@@ -2,6 +2,7 @@ import logging
 import os
 import boto3
 import pydash as _
+import json
 
 from openimage_backend_lib import database_models as models
 from openimage_backend_lib import repository as repo_module
@@ -28,11 +29,23 @@ def authorization_handler(event, context):
         logger.info("Sorry, could not find your user ID")
         repository.update_connection(
             connection_id, authorized="unauthorized", unique_user_id="anonymous")
-        return {"statusCode": 401, "body": "unauthorized"}
+        return {
+            "statusCode": 401,
+            "body": json.dumps({
+                "message_type": "authorization",
+                "data": "unauthorized"
+            })
+        }
     else:
         repository.update_connection(
             connection_id, authorized="authorized", unique_user_id=unique_user_id)
 
         logger.info("Welcome user %s")
         logger.info("Connection is now upgraded to authorized ;)")
-        return {"statusCode": 200, "body": "authorized"}
+        return {
+            "statusCode": 200,
+            "body": json.dumps({
+                "message_type": "authorization",
+                "data": "authorized"
+            })
+        }
