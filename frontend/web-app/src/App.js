@@ -7,6 +7,7 @@ import Divider from '@mui/material/Divider';
 
 import Header from './Header';
 import SideMenu from './SideMenu';
+import NotificationMenu from './NotificationMenu';
 import ImageDetailScreen from './ImageDetailScreen';
 import PromptScreen from './PromptScreen';
 
@@ -18,22 +19,7 @@ function App() {
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
       <Header />
-      <Drawer
-        sx={{
-          width: drawerWidth,
-          flexShrink: 0,
-          '& .MuiDrawer-paper': {
-            width: drawerWidth,
-            boxSizing: 'border-box',
-          },
-        }}
-        variant="permanent"
-        anchor="left"
-      >
-        <Toolbar />
-        <Divider />
-        <SideMenu />
-      </Drawer>
+      <SideMenu />
       <Box
         component="main"
         sx={{ flexGrow: 1, bgcolor: 'background.default', p: 3 }}
@@ -41,6 +27,7 @@ function App() {
         <Toolbar />
         <PromptScreen />
       </Box>
+      <NotificationMenu />
     </Box>
   );
 }
