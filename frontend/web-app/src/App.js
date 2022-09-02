@@ -22,14 +22,27 @@ websocket.addEventListener("close", (event) => {
   console.log("Close event", event)
 })
 
+websocket.addEventListener("message", (event) => {
+  console.log("Received message ", event)
+  if (event.data === "authorized") {
+    websocket.send(
+      JSON.stringify(
+        {
+          "action": "request",
+          "request_type": "prompt",
+          "data": "A cowboy cat"
+        }
+      )
+    )
+  }
+})
 websocket.addEventListener('open', (event) => {
   console.log("Opened", event)
   websocket.send(
     JSON.stringify(
       {
-        "action": "request",
-        "request_type": "prompt",
-        "data": "An astronaut dog"
+        "action": "authorize",
+        "token": "89480825643960485537603252629543680"
       }
     )
   )

@@ -160,7 +160,10 @@ class Repository:
             }
         )
         logger.info("Response from 'Dynamo': %s", response)
-        return response.get("Item")
+        user = response.get("Item")
+        if user:
+            return UserModel(**flatten_response(user))
+        return None
 
     def get_user_by_google_user_id(self, google_user_id: str) -> Optional[UserModel]:
         logger.info("Requesting user by google_user_id: %s", google_user_id)

@@ -108,7 +108,6 @@ functions:
 
   fanoutHandler:
     handler: fanout_service.handler
-    reservedConcurrency: 1
     timeout: 28
     events:
       - sqs:
