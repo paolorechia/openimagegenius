@@ -1,5 +1,5 @@
 from .date_helper import get_iso_and_timestamp_now
-from .database_models import Metadata, RequestModel, UserModel, APITokenModel
+from .database_models import Metadata, RequestModel, UserModel, APITokenModel, ConnectionModel
 from typing import Optional, List
 import os
 import logging
@@ -43,12 +43,52 @@ class Repository:
         self.ddb = dynamo_client
         self.environment = environment_info
 
+    def get_connection_by_id(self, connection_id) -> Optional[ConnectionModel]:
+        logger.info("Getting connection: %s", connection_id)
+        response = self.ddb.get_item(
+            TableName=self.environment.connection_table,
+            Key={Metadata.ConnectionTable.primary_key: {"S": connection_id}}
+        )
+        logger.info("Dynamo response: %s", response)
+        item = response.get("Item")
+        if not item:
+            return None
+        return ConnectionModel(**flatten_response(item))
+
+    def add_connection(self, connection_id):
+        logger.info("Adding connection :%s", connection_id)
+        response = self.ddb.put_item(
+            TableName=self.environment.connection_table,
+            Item={
+                Metadata.ConnectionTable.primary_key: {"S": connection_id},
+                "authorized": {"S": "unverified"},
+                "unique_user_id": {"S": "anonymous"},
+            }
+        )
+        logger.info("Dynamo response: %s", response)
+
+    def update_connection(self, connection_id: str, authorized: str, unique_user_id: str):
+        logger.info("Updating connection: %s to state %s for user %s",
+                    connection_id, authorized, unique_user_id)
+        response = self.ddb.update_item(
+            TableName=self.environment.connection_table,
+            Key={
+                Metadata.ConnectionTable.primary_key: {"S": connection_id}
+            },
+            UpdateExpression="SET authorized = :aut, unique_user_id = :uui",
+            ExpressionAttributeValues={
+                ":aut": {"S": authorized},
+                ":uui": {"S": unique_user_id},
+            }
+        )
+        logger.info("Dynamo DB response: %s", response)
+
     def get_request(self, request_id) -> Optional[RequestModel]:
         logger.info("Looking for request in database...%s", str(request_id))
         response = self.ddb.get_item(
             TableName=self.environment.request_table_name,
             Key={
-                Metadata.RequestTable.primary_key: {"S": request_id}
+                Metadata.RequestTable.primary_key: {"S": request_id},
             }
         )
         logger.info("Dynamo response: %s", response)
@@ -161,8 +201,6 @@ class Repository:
         logger.info("Setting connection_id: %s for user: %s",
                     connection_id, unique_user_id)
 
-        iso, ts = get_iso_and_timestamp_now()
-
         self.ddb.update_item(
             TableName=self.environment.user_table_name,
             Key={
@@ -170,9 +208,10 @@ class Repository:
                     "S": unique_user_id
                 }
             },
-            UpdateExpression="SET connection_id = :coni",
+            UpdateExpression="SET connection_id = :coni, connection_status = :cons",
             ExpressionAttributeValues={
                 ":coni": {"S": connection_id},
+                ":cons": {"S": "connected"}
             }
         )
 

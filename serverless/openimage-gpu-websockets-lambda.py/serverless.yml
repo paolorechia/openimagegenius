@@ -36,7 +36,7 @@ provider:
     USER_GOOGLE_EMAIL_INDEX_NAME: ${self:custom.databaseInfo.userGoogleEmailIndexName}
     REQUEST_UNIQUE_USER_ID_INDEX: ${self:custom.databaseInfo.requestUniqueUserIdIndex}
     API_TOKEN_UNIQUE_USER_ID_INDEX: ${self:custom.databaseInfo.APITokenUniqueUserIdIndex}
-    CONNECTION_UNIQUE_USER_ID_INDEX: ${self:custom.databaseInfo.connectcionUniqueUserIdIndex}
+    CONNECTION_UNIQUE_USER_ID_INDEX: ${self:custom.databaseInfo.connectionUniqueUserIdIndex}
     # Others
     AUTHORIZER_STAGE: ${self:provider.stage}
     API_ID: cwo3f8h30b
@@ -108,7 +108,7 @@ functions:
 
   fanoutHandler:
     handler: fanout_service.handler
-    # reservedConcurrency: 1
+    reservedConcurrency: 1
     timeout: 28
     events:
       - sqs:

@@ -5,7 +5,6 @@ import boto3
 import pydantic
 import pydash as _
 
-from openimage_backend_lib import database_models as models
 from openimage_backend_lib import repository as repo_module
 
 environment = repo_module.EnvironmentInfo()

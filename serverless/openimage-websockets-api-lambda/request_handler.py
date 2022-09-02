@@ -3,9 +3,10 @@ import logging
 import os
 from datetime import datetime, timezone
 from uuid import UUID, uuid4
+from typing import Optional
+import time
 
 import boto3
-import pydantic
 import pydash as _
 
 from openimage_backend_lib import database_models as models
@@ -45,15 +46,53 @@ class Request(BaseModel):
 
 
 def request_handler(event, context):
+    """Example request
+    {
+        'requestContext': {
+            'routeKey': 'request',
+            'authorizer': {
+                'unique_user_id': '17b86c9e-9bac-4f2f-b10a-68619baba577',
+                'google_user_id': '123',
+                'user_google_email': 'developer@gmail.com',
+                'principalId': 'user'
+            },
+            'messageId': 'Xux7ceaBliACHZQ=',
+            'eventType': 'MESSAGE',
+            'extendedRequestId': 'Xux7cExqliAFojw=',
+            'requestTime': '31/Aug/2022:13:34:52 +0000',
+            'messageDirection': 'IN',
+            'stage': 'dev',
+            'connectedAt': 1661952892072,
+            'requestTimeEpoch': 1661952892224,
+            'identity': {
+                'userAgent': 'Python/3.8 websockets/10.3',
+                'sourceIp': '93.193.144.114'
+            },
+            'requestId': 'Xux7cExqliAFojw=',
+            'domainName': 'dev.ws-api.openimagegenius.com',
+            'connectionId': 'Xux7aeaAFiACHZQ=',
+            'apiId': '20kmit0mc5'
+        },
+        'body': '{"action": "request", "request_type": "prompt", "data": "As astronaut cat"}', 'isBase64Encoded': False
+    }
+    """
     logger.info(event)
     try:
         json_body = json.loads(event["body"])
     except json.JSONDecodeError:
         return {"statusCode": 400, "body": "mal-formed JSON"}
+
+    connection_id = _.get(event, "requestContext.connectionId")
+
+    connection: Optional[models.ConnectionModel] = repository.get_connection_by_id(
+        connection_id)
+
+    if not connection or connection.authorized != "authorized":
+        return {"statusCode": 401, "body": "You're not authorized. Please send your valid token first."}
+
     try:
         request = Request(
-            unique_user_id=_.get(
-                event, "requestContext.authorizer.unique_user_id"),
+            unique_user_id=connection.unique_user_id,
             request_type=_.get(json_body, "request_type"),
             data=_.get(json_body, "data")
         )

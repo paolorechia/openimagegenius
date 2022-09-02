@@ -1,16 +1,15 @@
+import json
 import logging
 import os
-from copy import deepcopy
-from typing import List
-
 import time
+
 # Let's test the library import
 import boto3
 from google.auth.transport import requests
 from google.oauth2 import id_token
+
 from openimage_backend_lib import database_models as models
 from openimage_backend_lib import repository as repo_module
-from openimage_backend_lib import authorizer_helper
 
 dynamodb_client = boto3.client("dynamodb")
 environment = repo_module.EnvironmentInfo()
@@ -31,19 +30,23 @@ DEVELOPER_GOOGLE_USER_ID = os.getenv("DEVELOPER_GOOGLE_USER_ID", -1)
 def handler(event, context):
     logger.info("Event: %s", event)
     try:
-        resources = authorizer_helper.find_resources(event, stage)
-
         client_id = client_ids[stage]
         logger.info("Stage: %s", stage)
 
-        token = event.get("authorizationToken")
-        if not token:
-            # In websockets API Gateway, we need to inspect the header
-            token = event.get("headers", {}).get("Authorization")
-            connection_id = event.get(
-                "requestContext", {}).get("connectionId")
+        connection_id = event.get(
+            "requestContext", {}).get("connectionId")
 
         logger.info("Connection ID: %s", connection_id)
+
+        # Browser websockets can't pass token in header :(
+        # We need a follow up message to send token in body
+        # Let's also check there :)
+        json_body = json.loads(event["body"])
+        token = json_body["token"]
+
+        if not token:
+            # Nothing worked, we're toasted.
+            raise KeyError("Could not find token!")
 
         logger.info("Token: %s",  token)
         logger.info("Token type: %s", type(token))
@@ -79,16 +82,14 @@ def handler(event, context):
 
     except Exception as excp:
         logger.info("Caught exception: %s", str(excp))
-        deny_policy = authorizer_helper.create_policy(
-            event["methodArn"], "Deny")
-        logger.info("Denied policy: %s", str(deny_policy))
-        return deny_policy
+        return {}
 
-    allow_policy = authorizer_helper.create_policy(resources, "Allow")
-    allow_policy["context"] = {
-        "unique_user_id": user.unique_user_id,
-        "google_user_id": user.google_user_id,
-        "user_google_email": user.user_google_email
+    allow_policy = {
+        "context": {
+            "unique_user_id": user.unique_user_id,
+            "google_user_id": user.google_user_id,
+            "user_google_email": user.user_google_email
+        }
     }
     logger.info("Allowed policy: %s", str(allow_policy))
     return allow_policy

@@ -1,2 +1,4 @@
 pydantic==1.10.0
 pydash==5.1.0
+google-auth==2.11.0
+requests==2.28.1

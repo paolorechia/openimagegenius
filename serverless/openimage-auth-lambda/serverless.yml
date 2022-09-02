@@ -35,11 +35,13 @@ provider:
     USER_TABLE_NAME: ${self:custom.databaseInfo.userTableName}
     REQUEST_TABLE_NAME: ${self:custom.databaseInfo.requestTableName}
     API_TOKEN_TABLE_NAME: ${self:custom.databaseInfo.APITokenTable}
+    CONNECTION_TABLE_NAME: ${self:custom.databaseInfo.connectionTableName}
     # Indices
     GOOGLE_USER_ID_INDEX_NAME: ${self:custom.databaseInfo.googleUserIdIndexName}
     USER_GOOGLE_EMAIL_INDEX_NAME: ${self:custom.databaseInfo.userGoogleEmailIndexName}
     REQUEST_UNIQUE_USER_ID_INDEX: ${self:custom.databaseInfo.requestUniqueUserIdIndex}
     API_TOKEN_UNIQUE_USER_ID_INDEX: ${self:custom.databaseInfo.APITokenUniqueUserIdIndex}
+    CONNECTION_UNIQUE_USER_ID_INDEX: ${self:custom.databaseInfo.connectionUniqueUserIdIndex}
     # Others
     GOOGLE_OAUTH_APP_ID: ${self:custom.googleOAuthAppID}
     AUTHORIZER_STAGE: ${self:provider.stage}
@@ -58,25 +60,6 @@ functions:
       - Ref: PythonRequirementsLambdaLayer
     timeout: 6
 
-  authorizer:
-    handler: authorizer.handler
-    layers:
-      - Ref: PythonRequirementsLambdaLayer
-    timeout: 8
-
-
-  testAuthorizer:
-    handler: test_authorizer.handler
-    events:
-      - http:
-          path: /test-authorizer
-          method: GET
-          authorizer:
-            name: authorizer
-            resultTtlInSeconds: 0
-            identitySource: method.request.header.Authorization
-            type: token
-    timeout: 10
 
 plugins:
   - serverless-domain-manager
@@ -99,11 +82,3 @@ custom:
     dev: ${ssm:/dev/google-oauth-app-id}
   googleOAuthAppID: ${self:custom.OAuthAppIDMapping.${self:provider.stage}}
   databaseInfo: ${file(../database/serverless.yml):custom}
-
-resources:
-  Outputs:
-    AuthorizerLambdaFunction:
-      Export:
-        Name: authorizer-${self:provider.stage}-arn
-      Value:
-        Fn::GetAtt: AuthorizerLambdaFunction.Arn

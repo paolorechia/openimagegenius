@@ -31,7 +31,7 @@ custom:
   APITokenUniqueUserIdIndex: api-token-unique-user-id-index-${self:provider.stage}
 
   # Connection Table
-  connectionTable: connection-table-${self:provider.stage}
+  connectionTableName: connection-table-${self:provider.stage}
   connectionUniqueUserIdIndex: connection-unique-user-id-index-${self:provider.stage}
 
 resources:
