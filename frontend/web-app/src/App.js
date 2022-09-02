@@ -1,15 +1,13 @@
 import * as React from 'react';
 import Box from '@mui/material/Box';
-import Drawer from '@mui/material/Drawer';
 import CssBaseline from '@mui/material/CssBaseline';
 import Toolbar from '@mui/material/Toolbar';
-import Divider from '@mui/material/Divider';
 
-import Header from './Header';
-import SideMenu from './SideMenu';
-import NotificationMenu from './NotificationMenu';
-import ImageDetailScreen from './ImageDetailScreen';
-import PromptScreen from './PromptScreen';
+import Header from './Components/Header';
+import SideMenu from './Components/SideMenu';
+import NotificationMenu from './Components/NotificationMenu';
+import ImageDetailScreen from './Screens/ImageDetailScreen';
+import PromptScreen from './Screens/PromptScreen';
 
 const drawerWidth = 240;
 
