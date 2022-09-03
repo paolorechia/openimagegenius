@@ -5,7 +5,7 @@ import Button from '@mui/material/Button';
 import { Stack } from '@mui/system';
 
 
-export default function PromptScreen() {
+export default function PromptScreen(props) {
 
     const [prompt, setPrompt] = useState("")
 
@@ -16,6 +16,7 @@ export default function PromptScreen() {
         }
         console.log("Your prompt is: ", prompt)
         console.log("Submitting...")
+        props.websockets.manager.send_prompt_request(prompt)
     }
 
     function updatePrompt(event) {

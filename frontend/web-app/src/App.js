@@ -1,62 +1,43 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import CssBaseline from '@mui/material/CssBaseline';
 import Toolbar from '@mui/material/Toolbar';
 
 import Header from './Components/Header';
 import SideMenu from './Components/SideMenu';
-import NotificationMenu from './Components/NotificationMenu';
+import RequestsMenu from './Components/RequestsMenu';
 import ImageDetailScreen from './Screens/ImageDetailScreen';
 import PromptScreen from './Screens/PromptScreen';
 import WebsocketManager from './Components/WebsocketManager';
 
-let websocket = null;
-if (websocket === null) {
-  websocket = WebsocketManager()
-  console.log(websocket)
-}
-websocket.addEventListener("error", (error) => {
-  console.error(error)
-})
-websocket.addEventListener("close", (event) => {
-  console.log("Close event", event)
-})
-
-websocket.addEventListener("message", (event) => {
-  console.log("Received message ", event)
-  const obj = JSON.parse(event.data)
-  console.log("parsed", obj)
-  if (obj.message_type === "authorization") {
-    if (obj.data === "unauthorized") {
-      console.error("You suck! oops")
-    }
-    if (obj.data === "authorized") {
-      websocket.send(
-        JSON.stringify(
-          {
-            "action": "request",
-            "request_type": "prompt",
-            "data": "A cowboy cat"
-          }
-        )
-      )
-    }
-  }
-})
-websocket.addEventListener('open', (event) => {
-  console.log("Opened", event)
-  websocket.send(
-    JSON.stringify(
-      {
-        "action": "authorize",
-        "token": "89480825643960485537603252629543680"
-      }
-    )
-  )
-})
-
 function App() {
   const [selectedScreen, setScreen] = useState("prompt")
+  const [isWebsocketReady, setIsWebsocketReady] = useState(false)
+  const [websocketState, setWebsocketState] = useState({
+    "connected": false,
+    "authorized": false,
+    "requests": [],
+  })
+
+  const websockets = {
+    manager: WebsocketManager,
+    state: websocketState,
+    setState: setWebsocketState
+  }
+
+  useEffect(() => {
+    if (!isWebsocketReady) {
+      setTimeout(function () {
+        setIsWebsocketReady(true)
+      }, 500)
+    } else {
+      if (!websocketState.authorized && !websocketState.connected) {
+        WebsocketManager.setStateCallback(websocketState, setWebsocketState)
+        WebsocketManager.start_connection()
+      }
+    }
+    console.log("State change", websocketState)
+  }, [isWebsocketReady, websocketState]);
 
   return (
     <Box sx={{ display: 'flex' }}>
@@ -73,11 +54,11 @@ function App() {
         <Toolbar />
         {
           selectedScreen === "prompt"
-            ? <PromptScreen />
-            : <ImageDetailScreen />
+            ? <PromptScreen websockets={websockets} />
+            : <ImageDetailScreen websockets={websockets} />
         }
       </Box>
-      <NotificationMenu />
+      <RequestsMenu websockets={websockets} />
     </Box>
   );
 }
