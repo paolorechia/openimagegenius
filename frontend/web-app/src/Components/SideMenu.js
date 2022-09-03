@@ -5,7 +5,7 @@ import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import ChatBubbleOutlineTwoToneIcon from '@mui/icons-material/ChatBubbleOutlineTwoTone';
-import ImageTwoToneIcon from '@mui/icons-material/ImageTwoTone';
+// import ImageTwoToneIcon from '@mui/icons-material/ImageTwoTone';
 import Toolbar from '@mui/material/Toolbar';
 import Divider from '@mui/material/Divider';
 
@@ -16,9 +16,9 @@ export default function SideMenu(props) {
         props.setScreenCallback("prompt")
     }
 
-    function setImageDetailsScreen() {
-        props.setScreenCallback("image-details")
-    }
+    // function setImageDetailsScreen() {
+    //     props.setScreenCallback("image-details")
+    // }
 
     return (
         <Drawer
@@ -47,7 +47,7 @@ export default function SideMenu(props) {
                         }
                     </ListItemButton>
                 </ListItem>
-                <ListItem key="Image Details" disablePadding onClick={setImageDetailsScreen}>
+                {/* <ListItem key="Image Details" disablePadding onClick={setImageDetailsScreen}>
                     <ListItemButton>
                         <ListItemIcon>
                             <ImageTwoToneIcon />
@@ -57,7 +57,7 @@ export default function SideMenu(props) {
                             : <ListItemText primary="Image Details" />
                         }
                     </ListItemButton>
-                </ListItem>
+                </ListItem> */}
             </List>
         </Drawer>
     )

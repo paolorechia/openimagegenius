@@ -40,7 +40,7 @@ function App() {
   }, [isWebsocketReady, websocketState]);
 
   return (
-    <Box sx={{ display: 'flex' }}>
+    <Box sx={{ display: 'flex', minWidth: "300px" }}>
       <CssBaseline />
       <Header />
       <SideMenu

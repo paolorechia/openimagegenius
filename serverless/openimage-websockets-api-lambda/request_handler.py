@@ -117,12 +117,14 @@ def request_handler(event, context):
     creation_time_iso = creation_time.isoformat()
     creation_time_ts = creation_time.timestamp()
 
+    request_status = "requested"
+
     new_request = models.RequestModel(
         requester_unique_user_id=request.unique_user_id,
         request_id=request_id,
         request_type=request.request_type,
         data=request.data,
-        request_status="requested",
+        request_status=request_status,
         creation_time_iso=creation_time_iso,
         creation_time_timestamp=creation_time_ts,
         update_time_iso=creation_time_iso,
@@ -147,5 +149,7 @@ def request_handler(event, context):
             "message_type": "request_accepted",
             "data": {
                 "request_id": request_id,
+                "prompt": request.data,
+                "status": request_status
             }
         })}

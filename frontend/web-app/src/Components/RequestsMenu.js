@@ -12,10 +12,10 @@ export default function RequestsMenu(props) {
     return (
         <Drawer
             sx={{
-                width: drawerWidth,
-                flexShrink: 0,
+                minWidth: drawerWidth,
+                flexShrink: 1,
                 '& .MuiDrawer-paper': {
-                    width: drawerWidth,
+                    minWidth: drawerWidth,
                     boxSizing: 'border-box',
                 },
             }}
@@ -28,22 +28,17 @@ export default function RequestsMenu(props) {
                 Your requests
             </Typography>
 
-            {
-                props && props.websockets && props.websockets.state && props.websockets.state.requests
-                    ? <List>
-                        {
-                            props.websockets.state.requests.map(request => {
-                                return (
-
-                                    <ListItem key={request.data.request_id} disablePadding>
-                                        {request.data.request_id}
-                                    </ListItem>
-                                )
-                            })
-                        }
-                    </List>
-                    : 'no props'
-            }
+            <List>
+                {
+                    props.websockets.state.requests.map(request => {
+                        return (
+                            <ListItem key={request.data.request_id} disablePadding>
+                                {request.data.request_id}
+                            </ListItem>
+                        )
+                    })
+                }
+            </List>
         </Drawer>
     )
 }
