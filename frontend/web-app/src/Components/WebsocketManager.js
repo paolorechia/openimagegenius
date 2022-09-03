@@ -129,7 +129,7 @@ function WebsocketManagerFactory() {
                 JSON.stringify(
                     {
                         "action": "authorize",
-                        "token": "89480825643960485537603252629543680"
+                        "token": token
                     }
                 )
             )
