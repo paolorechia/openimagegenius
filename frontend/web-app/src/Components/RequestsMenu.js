@@ -4,6 +4,11 @@ import Divider from '@mui/material/Divider';
 import Typography from '@mui/material/Typography';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
+import { ListItemButton } from '@mui/material';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
+import Collapse from '@mui/material/Collapse';
+import StarBorder from '@mui/icons-material/StarBorder';
 
 const drawerWidth = 300;
 
@@ -32,9 +37,32 @@ export default function RequestsMenu(props) {
                 {
                     props.websockets.state.requests.map(request => {
                         return (
-                            <ListItem key={request.data.request_id} disablePadding>
-                                {request.data.request_id}
-                            </ListItem>
+                            <Collapse key={request.data.request_id} in={true} timeout="auto" unmountOnExit>
+                                <List component="div" disablePadding>
+                                    <ListItem key={request.data.request_id} disablePadding>
+                                        <ListItemButton>
+                                            <ListItemIcon>
+                                                <StarBorder />
+                                            </ListItemIcon>
+                                            <ListItemText primary={request.data.request_id.substring(0, 5)} />
+                                            <ListItemText primary={request.data.prompt} />
+                                            {request.data.s3_url ? request.data.s3_url : ""}
+                                        </ListItemButton>
+                                    </ListItem>
+                                </List>
+                                {request.data.s3_url ?
+                                    <List component="div" disablePadding>
+                                        <ListItem key={request.data.s3_url} disablePadding>
+                                            <ListItemButton>
+                                                <ListItemIcon>
+                                                    <StarBorder />
+                                                </ListItemIcon>
+                                                <img width="60px" height="60px" src={request.data.s3_url} alt={request.data.prompt} />
+                                            </ListItemButton>
+                                        </ListItem>
+                                    </List>
+                                    : ""}
+                            </Collapse>
                         )
                     })
                 }
