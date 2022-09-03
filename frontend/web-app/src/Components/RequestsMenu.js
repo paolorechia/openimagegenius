@@ -46,7 +46,6 @@ export default function RequestsMenu(props) {
                                             </ListItemIcon>
                                             <ListItemText primary={request.data.request_id.substring(0, 5)} />
                                             <ListItemText primary={request.data.prompt} />
-                                            {request.data.s3_url ? request.data.s3_url : ""}
                                         </ListItemButton>
                                     </ListItem>
                                 </List>
@@ -54,10 +53,7 @@ export default function RequestsMenu(props) {
                                     <List component="div" disablePadding>
                                         <ListItem key={request.data.s3_url} disablePadding>
                                             <ListItemButton>
-                                                <ListItemIcon>
-                                                    <StarBorder />
-                                                </ListItemIcon>
-                                                <img width="60px" height="60px" src={request.data.s3_url} alt={request.data.prompt} />
+                                                <img width="120px" height="120px" src={request.data.s3_url} alt={request.data.prompt} />
                                             </ListItemButton>
                                         </ListItem>
                                     </List>

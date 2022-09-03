@@ -108,7 +108,7 @@ function WebsocketManagerFactory() {
                 let merged_requests = this.state.requests.map(request => {
                     if (request.data.request_id === obj.data.request_id) {
                         return {
-                            message_type: obj.data.message_type,
+                            message_type: obj.message_type,
                             data: {
                                 ...request.data,
                                 ...obj.data
