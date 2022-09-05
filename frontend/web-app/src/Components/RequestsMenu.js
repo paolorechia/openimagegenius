@@ -61,24 +61,17 @@ export default function RequestsMenu(props) {
                                             <ListItemIcon>
                                                 {
                                                     request.message_type === "request_accepted"
-                                                        ? <HourglassTopIcon color="primary"/>
+                                                        ? <HourglassTopIcon color="primary" />
                                                         : request.message_type === "job_complete"
-                                                            ? <CheckCircleIcon color="success"/>
-                                                            : <ErrorIcon color="error"/>
+                                                            ? <CheckCircleIcon color="success" />
+                                                            : <ErrorIcon color="error" />
                                                 }
 
                                             </ListItemIcon>
                                             <Stack>
                                                 <ListItemText primary={request.data.request_id.substring(0, 5)} />
                                                 <ListItemText
-                                                    primary={request.data.prompt}
-                                                    primaryTypographyProps={{
-                                                        variant: 'subtitle2',
-                                                        style: {
-                                                            overflow: 'hidden',
-                                                            textOverflow: 'ellipsis'
-                                                        }
-                                                    }}
+                                                    primary={request.data.prompt.substring(0, 24)}
                                                 />
                                             </Stack>
                                         </ListItemButton>
