@@ -7,7 +7,6 @@ import { ListItemButton } from '@mui/material';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import Collapse from '@mui/material/Collapse';
-import StarBorder from '@mui/icons-material/StarBorder';
 import { Stack } from '@mui/system';
 import Drawer from '@mui/material/Drawer';
 import ChrevonRightIcon from '@mui/icons-material/ChevronRight';
@@ -62,10 +61,10 @@ export default function RequestsMenu(props) {
                                             <ListItemIcon>
                                                 {
                                                     request.message_type === "request_accepted"
-                                                        ? <HourglassTopIcon />
+                                                        ? <HourglassTopIcon color="primary"/>
                                                         : request.message_type === "job_complete"
-                                                            ? <CheckCircleIcon />
-                                                            : <ErrorIcon />
+                                                            ? <CheckCircleIcon color="success"/>
+                                                            : <ErrorIcon color="error"/>
                                                 }
 
                                             </ListItemIcon>

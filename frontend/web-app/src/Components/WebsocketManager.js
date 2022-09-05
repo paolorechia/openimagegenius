@@ -118,7 +118,6 @@ function WebsocketManagerFactory() {
                     }
                     return request
                 })
-
                 this.setState({
                     ...this.state,
                     requests: merged_requests
