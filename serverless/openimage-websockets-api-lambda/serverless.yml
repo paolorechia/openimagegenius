@@ -62,6 +62,7 @@ provider:
             - "dynamodb:UpdateItem"
             - "dynamodb:ListStreams"
             - "dynamodb:DescribeTable"
+            - "dynamodb:DeleteItem"
           Resource:
             - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.databaseInfo.requestTableName}"
             - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.databaseInfo.requestTableName}/index/*"

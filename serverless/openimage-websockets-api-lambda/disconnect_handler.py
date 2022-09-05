@@ -72,7 +72,7 @@ def disconnect_handler(event, context):
     connection_id = _.get(event, "requestContext.connectionId")
     connection = repository.get_connection_by_id(connection_id)
     if connection.unique_user_id:
-        repository.set_disconnect_for_user(connection_id)
+        repository.set_disconnect_for_user(connection.unique_user_id)
         logger.info("Disconnected request received.")
         telegram_client.send_message(f"User disconnected: {connection_id}")
     repository.delete_connection(connection_id)
