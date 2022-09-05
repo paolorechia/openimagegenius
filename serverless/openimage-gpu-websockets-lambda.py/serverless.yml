@@ -37,6 +37,9 @@ provider:
     REQUEST_UNIQUE_USER_ID_INDEX: ${self:custom.databaseInfo.requestUniqueUserIdIndex}
     API_TOKEN_UNIQUE_USER_ID_INDEX: ${self:custom.databaseInfo.APITokenUniqueUserIdIndex}
     CONNECTION_UNIQUE_USER_ID_INDEX: ${self:custom.databaseInfo.connectionUniqueUserIdIndex}
+    # Telegram
+    TELEGRAM_TOKEN: ${ssm:/dev/telegram/token}
+    TELEGRAM_CHAT_ID: ${ssm:/dev/telegram/chat_id}
     # Others
     AUTHORIZER_STAGE: ${self:provider.stage}
     API_ID: cwo3f8h30b
