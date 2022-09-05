@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import CssBaseline from '@mui/material/CssBaseline';
 import Toolbar from '@mui/material/Toolbar';
+import { CircularProgress } from '@mui/material';
 
 import Header from './Components/Header';
 import SideMenu from './Components/SideMenu';
@@ -9,6 +10,7 @@ import RequestsMenu from './Components/RequestsMenu';
 import ImageDetailScreen from './Screens/ImageDetailScreen';
 import PromptScreen from './Screens/PromptScreen';
 import WebsocketManager from './Components/WebsocketManager';
+import Unauthorized from './Components/Unauthorized';
 
 function App() {
   const [selectedScreen, setScreen] = useState("prompt")
@@ -53,9 +55,13 @@ function App() {
       >
         <Toolbar />
         {
-          selectedScreen === "prompt"
-            ? <PromptScreen websockets={websockets} />
-            : <ImageDetailScreen websockets={websockets} />
+          !websockets.state.connected ?
+          <CircularProgress />
+          :  websockets.state.authorized ? 
+              selectedScreen === "prompt"
+                ? <PromptScreen websockets={websockets} />
+                : <ImageDetailScreen websockets={websockets} />
+              : <Unauthorized />  
         }
       </Box>
       <RequestsMenu websockets={websockets} />

@@ -18,7 +18,7 @@ logger.setLevel(logging.INFO)
 telegram_client = telegram.get_telegram(Session())
 
 
-def connection_handler(event, context):
+def disconnect_handler(event, context):
     """"
     example_request = {
         'headers': {
@@ -70,7 +70,10 @@ def connection_handler(event, context):
     """
     logger.info("Event: %s", event)
     connection_id = _.get(event, "requestContext.connectionId")
-    repository.add_connection(connection_id)
-    logger.info("Connection request received.")
-    telegram_client.send_message(f"New connection: {connection_id}")
-    return {"statusCode": 200, "body": "You're connected, but not authorized."}
+    connection = repository.get_connection_by_id(connection_id)
+    if connection.unique_user_id:
+        repository.set_disconnect_for_user(connection_id)
+        logger.info("Disconnected request received.")
+        telegram_client.send_message(f"User disconnected: {connection_id}")
+    repository.delete_connection(connection_id)
+    return {"statusCode": 200, "body": "You're disconnected."}

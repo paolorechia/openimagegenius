@@ -21,6 +21,7 @@ class EnvironmentInfo:
         self.request_unique_user_id_index = os.environ["REQUEST_UNIQUE_USER_ID_INDEX"]
         self.api_token_unique_user_id_index = os.environ["API_TOKEN_UNIQUE_USER_ID_INDEX"]
         self.connection_unique_user_id_index = os.environ["CONNECTION_UNIQUE_USER_ID_INDEX"]
+        self.connection_ip_address_index = os.environ["CONNECTION_IP_ADRESS_INDEX"]
 
 
 def flatten_response(dynamodb_dict_response):
@@ -55,7 +56,15 @@ class Repository:
             return None
         return ConnectionModel(**flatten_response(item))
 
-    def add_connection(self, connection_id):
+    def delete_connection(self, connection_id) -> Optional[ConnectionModel]:
+        logger.info("Deleting connection: %s", connection_id)
+        response = self.ddb.delete_item(
+            TableName=self.environment.connection_table,
+            Key={Metadata.ConnectionTable.primary_key: {"S": connection_id}}
+        )
+        logger.info("Dynamo response: %s", response)
+
+    def add_connection(self, connection_id, ip_address):
         logger.info("Adding connection :%s", connection_id)
         response = self.ddb.put_item(
             TableName=self.environment.connection_table,
@@ -63,6 +72,7 @@ class Repository:
                 Metadata.ConnectionTable.primary_key: {"S": connection_id},
                 "authorized": {"S": "unverified"},
                 "unique_user_id": {"S": "anonymous"},
+                "ip_address": {"S": ip_address}
             }
         )
         logger.info("Dynamo response: %s", response)
@@ -215,6 +225,22 @@ class Repository:
             ExpressionAttributeValues={
                 ":coni": {"S": connection_id},
                 ":cons": {"S": "connected"}
+            }
+        )
+
+    def set_disconnect_for_user(self, unique_user_id: str) -> None:
+        logger.info("Setting user %s as disconnected", unique_user_id)
+
+        self.ddb.update_item(
+            TableName=self.environment.user_table_name,
+            Key={
+                Metadata.UserTable.primary_key: {
+                    "S": unique_user_id
+                }
+            },
+            UpdateExpression="SET connection_status = :cons",
+            ExpressionAttributeValues={
+                ":cons": {"S": "disconnected"}
             }
         )
 

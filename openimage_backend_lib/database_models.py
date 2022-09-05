@@ -21,7 +21,7 @@ class ConnectionModel(BaseModel):
     connection_id: str
     authorized: Optional[str] = "unverified"
     unique_user_id: Optional[str] = ""
-
+    ip_address: Optional[str] = ""
 
 class UserModel(BaseModel):
     unique_user_id: str

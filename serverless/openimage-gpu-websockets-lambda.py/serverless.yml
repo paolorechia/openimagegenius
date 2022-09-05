@@ -37,6 +37,8 @@ provider:
     REQUEST_UNIQUE_USER_ID_INDEX: ${self:custom.databaseInfo.requestUniqueUserIdIndex}
     API_TOKEN_UNIQUE_USER_ID_INDEX: ${self:custom.databaseInfo.APITokenUniqueUserIdIndex}
     CONNECTION_UNIQUE_USER_ID_INDEX: ${self:custom.databaseInfo.connectionUniqueUserIdIndex}
+    CONNECTION_IP_ADRESS_INDEX: ${self:custom.databaseInfo.connectionIpAddressIndex}
+
     # Telegram
     TELEGRAM_TOKEN: ${ssm:/dev/telegram/token}
     TELEGRAM_CHAT_ID: ${ssm:/dev/telegram/chat_id}

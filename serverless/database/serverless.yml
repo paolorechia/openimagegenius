@@ -33,6 +33,7 @@ custom:
   # Connection Table
   connectionTableName: connection-table-${self:provider.stage}
   connectionUniqueUserIdIndex: connection-unique-user-id-index-${self:provider.stage}
+  connectionIpAddressIndex: connection-ip-address-index-${self:provider.stage}
 
 resources:
   Resources:
@@ -112,12 +113,14 @@ resources:
     ConnectionTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: ${self:custom.connectionTable}
+        TableName: ${self:custom.connectionTableName}
         BillingMode: PAY_PER_REQUEST
         AttributeDefinitions:
           - AttributeName: connection_id
             AttributeType: S
           - AttributeName: unique_user_id
+            AttributeType: S
+          - AttributeName: ip_address
             AttributeType: S
         KeySchema:
           - AttributeName: connection_id
@@ -126,6 +129,12 @@ resources:
           - IndexName: ${self:custom.connectionUniqueUserIdIndex}
             KeySchema:
               - AttributeName: unique_user_id
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+          - IndexName: ${self:custom.connectionIpAddressIndex}
+            KeySchema:
+              - AttributeName: ip_address
                 KeyType: HASH
             Projection:
               ProjectionType: ALL
