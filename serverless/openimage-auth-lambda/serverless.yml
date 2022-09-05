@@ -51,7 +51,6 @@ provider:
     TELEGRAM_TOKEN: ${ssm:/dev/telegram/token}
     TELEGRAM_CHAT_ID: ${ssm:/dev/telegram/chat_id}
 
-
 functions:
   redirect:
     handler: redirect.handler
@@ -63,12 +62,15 @@ functions:
       - Ref: PythonRequirementsLambdaLayer
     timeout: 6
 
-
 plugins:
   - serverless-domain-manager
   - serverless-python-requirements
+  - serverless-api-gateway-throttling
 
 custom:
+  apiGatewayThrottling:
+    maxRequestsPerSecond: 2
+    maxConcurrentRequests: 5
   customDomain:
     domainName: ${self:provider.stage}.api.openimagegenius.com
     basePath: redirect

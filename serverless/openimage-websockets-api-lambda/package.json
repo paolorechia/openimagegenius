@@ -12,6 +12,7 @@
     "serverless": "^3.22.0"
   },
   "devDependencies": {
+    "serverless-api-gateway-throttling": "^2.0.2",
     "serverless-domain-manager": "^6.1.0",
     "serverless-python-requirements": "^5.4.0"
   }
