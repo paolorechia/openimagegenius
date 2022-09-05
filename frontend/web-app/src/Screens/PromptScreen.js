@@ -40,7 +40,7 @@ export default function PromptScreen(props) {
                 multiline={true}
                 sx={
                     {
-                        "maxWidth": "600px",
+                        "maxWidth": "800px",
                     }
                 } />
             <Button

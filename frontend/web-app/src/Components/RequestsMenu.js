@@ -1,5 +1,4 @@
-import Drawer from '@mui/material/Drawer';
-import Toolbar from '@mui/material/Toolbar';
+import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
 import Typography from '@mui/material/Typography';
 import List from '@mui/material/List';
@@ -9,25 +8,41 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import Collapse from '@mui/material/Collapse';
 import StarBorder from '@mui/icons-material/StarBorder';
+import { Stack } from '@mui/system';
+import Drawer from '@mui/material/Drawer';
+import ChrevonRightIcon from '@mui/icons-material/ChevronRight';
+import { IconButton } from '@mui/material';
 
-const drawerWidth = 300;
+const drawerWidth = 150;
 
 export default function RequestsMenu(props) {
     console.log("Requests props", props)
     return (
         <Drawer
+            open={props.isRequestsDrawerOpen}
             sx={{
                 minWidth: drawerWidth,
+                maxWidth: drawerWidth * 2,
                 flexShrink: 1,
                 '& .MuiDrawer-paper': {
-                    minWidth: drawerWidth,
+                    minWidth: drawerWidth * 2,
                     boxSizing: 'border-box',
                 },
             }}
-            variant="permanent"
+            variant="persistent"
             anchor="right"
         >
-            <Toolbar />
+            <Box sx={{
+                "display": "flex",
+                "justifyContent": "left",
+                "padding": "11.4px"
+            }}>
+                <IconButton onClick={props.handleRequestDrawerClose}>
+                    <ChrevonRightIcon
+                        sx={{ "marginTop": "0px", "marginBottom": "0px", "marginRight": "0px" }}
+                    />
+                </IconButton>
+            </Box>
             <Divider />
             <Typography variant="h6" noWrap component="div" sx={{ "padding": "30px" }}>
                 Your requests
@@ -44,8 +59,19 @@ export default function RequestsMenu(props) {
                                             <ListItemIcon>
                                                 <StarBorder />
                                             </ListItemIcon>
-                                            <ListItemText primary={request.data.request_id.substring(0, 5)} />
-                                            <ListItemText primary={request.data.prompt} />
+                                            <Stack>
+                                                <ListItemText primary={request.data.request_id.substring(0, 5)} />
+                                                <ListItemText
+                                                    primary={request.data.prompt}
+                                                    primaryTypographyProps={{
+                                                        variant: 'subtitle2',
+                                                        style: {
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis'
+                                                        }
+                                                    }}
+                                                />
+                                            </Stack>
                                         </ListItemButton>
                                     </ListItem>
                                 </List>

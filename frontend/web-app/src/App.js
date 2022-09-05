@@ -20,11 +20,30 @@ function App() {
     "authorized": false,
     "requests": [],
   })
+  const [isDrawerOpen, setIsDrawerOpen] = useState(true)
+  const [isRequestsDrawerOpen, setIsRequestsDrawerOpen] = useState(true)
+
 
   const websockets = {
     manager: WebsocketManager,
     state: websocketState,
     setState: setWebsocketState
+  }
+
+  function handleDrawerOpen() {
+    setIsDrawerOpen(true)
+  }
+
+  function handleDrawerClose() {
+    setIsDrawerOpen(false)
+  }
+
+  function handleRequestDrawerOpen() {
+    setIsRequestsDrawerOpen(true)
+  }
+
+  function handleRequestDrawerClose() {
+    setIsRequestsDrawerOpen(false)
   }
 
   useEffect(() => {
@@ -42,12 +61,19 @@ function App() {
   }, [isWebsocketReady, websocketState]);
 
   return (
-    <Box sx={{ display: 'flex', minWidth: "300px" }}>
+    <Box sx={{ display: 'flex', width: "100%"}}>
       <CssBaseline />
-      <Header />
+      <Header
+        handleDrawerOpen={handleDrawerOpen}
+        isDrawerOpen={isDrawerOpen}
+        handleRequestDrawerOpen={handleRequestDrawerOpen}
+        isRequestsDrawerOpen={isRequestsDrawerOpen}
+      />
       <SideMenu
         selectedScreen={selectedScreen}
         setScreenCallback={setScreen}
+        handleDrawerClose={handleDrawerClose}
+        isDrawerOpen={isDrawerOpen}
       />
       <Box
         component="main"
@@ -56,15 +82,20 @@ function App() {
         <Toolbar />
         {
           !websockets.state.connected ?
-          <CircularProgress />
-          :  websockets.state.authorized ? 
+            <CircularProgress />
+            : websockets.state.authorized ?
               selectedScreen === "prompt"
                 ? <PromptScreen websockets={websockets} />
                 : <ImageDetailScreen websockets={websockets} />
-              : <Unauthorized />  
+              : <Unauthorized />
         }
+        <RequestsMenu
+          websockets={websockets}
+          isRequestsDrawerOpen={isRequestsDrawerOpen}
+          handleRequestDrawerClose={handleRequestDrawerClose}
+        />
+
       </Box>
-      <RequestsMenu websockets={websockets} />
     </Box>
   );
 }

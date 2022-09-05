@@ -28,9 +28,9 @@ class Request(BaseModel):
     unique_user_id: str
 
     @validator('data')
-    def max_length_256(cls, v):
-        if len(v) > 256:
-            raise ValueError("data exceeds the limit of 256 characters.")
+    def max_length_1024(cls, v):
+        if len(v) > 1024:
+            raise ValueError("data exceeds the limit of 1024 characters.")
         return v
 
     @validator('request_type')
