@@ -4,6 +4,7 @@ import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import { Stack } from '@mui/system';
 import Box from '@mui/material/Box';
+import { CircularProgress } from '@mui/material';
 
 
 export default function PromptScreen(props) {
@@ -22,7 +23,6 @@ export default function PromptScreen(props) {
             return;
         }
         console.log("Your prompt is: ", prompt)
-        console.log("Submitting...")
         props.websockets.manager.send_prompt_request(prompt)
     }
 
@@ -43,23 +43,27 @@ export default function PromptScreen(props) {
                         "maxWidth": "800px",
                     }
                 } />
-            <Button
-                onClick={submitPrompt}
-                variant="contained"
-                sx={
-                    {
-                        "marginTop": "60px",
-                        "height": "60px",
-                        "maxWidth": "200px"
+            {props.websockets.state.busy
+
+                ? <CircularProgress sx={{ "marginTop": "50px", "marginLeft": "50px" }} />
+                : <Button
+                    onClick={submitPrompt}
+                    variant="contained"
+                    sx={
+                        {
+                            "marginTop": "60px",
+                            "height": "60px",
+                            "maxWidth": "200px"
+                        }
                     }
-                }
-            >
-                Request Generation
-            </Button>
+                >
+                    Request Generation
+                </Button>
+            }
             <Box sx={{ padding: "50px" }}>
                 {last_completed_job !== null
                     ? <img src={last_completed_job.data.s3_url} width="500px" height="500px" alt={last_completed_job.data.prompt} />
-                    : "Go ahead"
+                    : ""
                 }
             </Box>
         </Stack>

@@ -19,6 +19,7 @@ function App() {
   const [websocketState, setWebsocketState] = useState({
     "connected": false,
     "authorized": false,
+    "busy": false,
     "requests": [],
   })
   const [notifications, setNotifications] = useState([])
@@ -61,7 +62,10 @@ function App() {
         WebsocketManager.start_connection()
       }
     }
-    if (websocketState.requests.length > 0) {
+    if (websocketState.busy) {
+      setTimeout(function () {
+        setWebsocketState({ ...websocketState, busy: false })
+      }, 2000)
     }
     console.log("State change", websocketState)
   }, [isWebsocketReady, websocketState, notifications]);
@@ -104,7 +108,7 @@ function App() {
         return (
           <Box>
             <Snackbar
-              anchorOrigin={{ "vertical": "bottom", "horizontal": "right" }}
+              anchorOrigin={{ "vertical": "bottom", "horizontal": "center" }}
               key={index}
               open={true}
               autoHideDuration={6000}

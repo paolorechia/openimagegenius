@@ -103,6 +103,7 @@ function WebsocketManagerFactory() {
             if (obj.message_type === "request_accepted") {
                 this.setState({
                     ...this.state,
+                    busy: true,
                     requests: [...this.state.requests, obj]
                 })
             }
