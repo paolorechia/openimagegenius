@@ -12,6 +12,9 @@ import { Stack } from '@mui/system';
 import Drawer from '@mui/material/Drawer';
 import ChrevonRightIcon from '@mui/icons-material/ChevronRight';
 import { IconButton } from '@mui/material';
+import ErrorIcon from '@mui/icons-material/Error';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import HourglassTopIcon from '@mui/icons-material/HourglassTop';
 
 const drawerWidth = 150;
 
@@ -57,7 +60,14 @@ export default function RequestsMenu(props) {
                                     <ListItem key={request.data.request_id} disablePadding>
                                         <ListItemButton>
                                             <ListItemIcon>
-                                                <StarBorder />
+                                                {
+                                                    request.message_type === "request_accepted"
+                                                        ? <HourglassTopIcon />
+                                                        : request.message_type === "job_complete"
+                                                            ? <CheckCircleIcon />
+                                                            : <ErrorIcon />
+                                                }
+
                                             </ListItemIcon>
                                             <Stack>
                                                 <ListItemText primary={request.data.request_id.substring(0, 5)} />

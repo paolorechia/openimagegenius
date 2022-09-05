@@ -104,7 +104,8 @@ function WebsocketManagerFactory() {
                     requests: [...this.state.requests, obj]
                 })
             }
-            if (obj.message_type === "job_complete") {
+            if (obj.message_type === "job_complete" || obj.message_type === "job_failed") {
+                console.log("Got job update", obj.message_type)
                 let merged_requests = this.state.requests.map(request => {
                     if (request.data.request_id === obj.data.request_id) {
                         return {

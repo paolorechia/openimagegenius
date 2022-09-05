@@ -13,7 +13,7 @@ export default function Header(props) {
         <Toolbar
             sx={{ 
                 "display": "flex",
-                "justify-content": "space-between"
+                "justifyContent": "space-between"
             }}>
             {
                 props.isDrawerOpen

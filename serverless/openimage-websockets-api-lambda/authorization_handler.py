@@ -9,6 +9,7 @@ from openimage_backend_lib import database_models as models
 from openimage_backend_lib import repository as repo_module
 from openimage_backend_lib import telegram
 from requests import Session
+import time
 
 dynamodb_client = boto3.client("dynamodb")
 sqs_client = boto3.client("sqs")
@@ -40,6 +41,7 @@ def authorization_handler(event, context):
             })
         }
     else:
+        time.sleep(1.0)
         repository.update_connection(
             connection_id, authorized="authorized", unique_user_id=unique_user_id)
 
