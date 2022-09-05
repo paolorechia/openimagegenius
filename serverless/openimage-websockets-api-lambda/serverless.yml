@@ -178,7 +178,7 @@ resources:
         QueueName: ${self:custom.imageProcessingQueueName}
         RedrivePolicy:
           deadLetterTargetArn: !GetAtt ImageProcessingQueueDLQ.Arn
-          maxReceiveCount: 3
+          maxReceiveCount: 1
         VisibilityTimeout: 30
 
   Outputs:

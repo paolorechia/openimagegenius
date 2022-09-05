@@ -5,12 +5,14 @@ function WebsocketManagerFactory() {
     this.connection = null;
     this.state = null;
     this.setState = null;
+    this.setNotifications = null;
 
-    this.setStateCallback = function (state, setNewState) {
+    this.setStateCallback = function (state, setNewState, setNotifications) {
         this.state = state
         var that = this
         this.setState = function (state) {
             that.state = state;
+            that.setNotifications = setNotifications
             setNewState(state);
             console.log("Websocket Manager state", that.state)
         }
@@ -120,9 +122,11 @@ function WebsocketManagerFactory() {
                 })
                 this.setState({
                     ...this.state,
-                    requests: merged_requests
+                    requests: merged_requests,
                 })
             }
+            this.setNotifications([obj])
+
         })
         websocket.addEventListener('open', () => {
             websocket.send(
