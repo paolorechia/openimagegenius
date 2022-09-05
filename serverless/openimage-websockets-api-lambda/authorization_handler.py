@@ -1,12 +1,14 @@
+import json
 import logging
 import os
+
 import boto3
 import pydash as _
-import json
-
+from openimage_backend_lib import authorizer
 from openimage_backend_lib import database_models as models
 from openimage_backend_lib import repository as repo_module
-from openimage_backend_lib import authorizer
+from openimage_backend_lib import telegram
+from requests import Session
 
 dynamodb_client = boto3.client("dynamodb")
 sqs_client = boto3.client("sqs")
@@ -15,6 +17,7 @@ environment = repo_module.EnvironmentInfo()
 repository = repo_module.Repository(dynamodb_client, environment)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+telegram_client = telegram.get_telegram(Session())
 
 
 def authorization_handler(event, context):
@@ -40,8 +43,10 @@ def authorization_handler(event, context):
         repository.update_connection(
             connection_id, authorized="authorized", unique_user_id=unique_user_id)
 
-        logger.info("Welcome user %s")
+        logger.info("Welcome user %s", unique_user_id)
         logger.info("Connection is now upgraded to authorized ;)")
+        telegram_client.send_message(f"User connected: {unique_user_id}")
+
         return {
             "statusCode": 200,
             "body": json.dumps({

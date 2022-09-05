@@ -1,5 +1,8 @@
 import os
+import logging
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 class TelegramEnvironment:
     def __init__(self) -> None:
@@ -8,23 +11,22 @@ class TelegramEnvironment:
 
 
 class TelegramClient:
-    def __init__(self, session, token, chat_id, logger) -> None:
+    def __init__(self, session, token, chat_id) -> None:
         self.session = session
         self.token = token
         self.chat_id = chat_id
         self.headers = {"Content-Type": "applicaton/json"}
         self.url = f"https://api.telegram.org/bot{self.token}"
-        self.logger = logger
 
     def send_message(self, message: str):
-        self.logger.info("Sending message to telegram: %s", message)
+        logger.info("Sending message to telegram: %s", message)
         response = self.session.post(f"{self.url}/sendMessage", json={
             "chat_id": self.chat_id,
             "text": message
         })
-        self.logger.info("Telegram response: %s", response.json())
+        logger.info("Telegram response: %s", response.json())
 
 
-def get_telegram(http_session, logger) -> TelegramClient:
+def get_telegram(http_session) -> TelegramClient:
     env = TelegramEnvironment()
-    return TelegramClient(http_session, env.token, env.chat_id, logger)
+    return TelegramClient(http_session, env.token, env.chat_id)

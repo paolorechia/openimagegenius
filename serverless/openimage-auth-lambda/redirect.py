@@ -1,16 +1,19 @@
-from enum import unique
 import logging
 import os
 import urllib.parse as parser
 from datetime import datetime, timezone
-
 from uuid import uuid4
+
 import boto3
+# Careful, this import must come before google.auth.transport
+from requests import Session
+
 from google.auth.transport import requests
 from google.oauth2 import id_token
 
 from openimage_backend_lib import database_models as models
 from openimage_backend_lib import repository as repo_module
+from openimage_backend_lib import telegram
 
 dynamodb_client = boto3.client("dynamodb")
 environment = repo_module.EnvironmentInfo()
@@ -24,6 +27,9 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 dynamo_db_client = boto3.client("dynamodb")
+
+http_session = Session()
+telegram_client = telegram.get_telegram(http_session)
 
 
 html_success_page = """
@@ -127,6 +133,7 @@ def handler(event, context):
                     creation_time_timestamp=creation_time_timestamp,
                 )
             )
+            telegram_client.send_message(f"New user created: {unique_user_id}")
 
     body = {
         "message": "Authorized successfully!",
@@ -139,7 +146,7 @@ def handler(event, context):
         "statusCode": 200,
         "body": html_success_page.format(stage),
         "headers": {
-            "Set-Cookie": f"token={token}; Domain=openimagegenius.com",
+            "Set-Cookie": f"token={token}; Domain=openimagegenius.com; Secure",
             "Content-Type": "text/html"
         }}
     return response

@@ -14,7 +14,7 @@ logger.setLevel(logging.INFO)
 
 environment = repo_module.EnvironmentInfo()
 
-telegram_client = telegram.get_telegram(requests.Session(), logger)
+telegram_client = telegram.get_telegram(requests.Session())
 
 dynamodb_client = boto3.client("dynamodb")
 api_client = boto3.client('apigatewaymanagementapi')

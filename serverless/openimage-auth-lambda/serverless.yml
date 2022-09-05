@@ -47,6 +47,9 @@ provider:
     AUTHORIZER_STAGE: ${self:provider.stage}
     DEVELOPER_GOOGLE_USER_ID: ${ssm:/dev/develop-google-user-id} # Only exists in dev stage
     WS_SECRET_PASS: ${ssm:/dev/websockets-api/admin-creds} # Only exists in dev stage
+    # Telegram
+    TELEGRAM_TOKEN: ${ssm:/dev/telegram/token}
+    TELEGRAM_CHAT_ID: ${ssm:/dev/telegram/chat_id}
 
 
 functions:

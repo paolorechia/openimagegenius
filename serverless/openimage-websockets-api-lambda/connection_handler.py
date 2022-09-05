@@ -3,15 +3,20 @@ import logging
 import boto3
 import pydantic
 import pydash as _
+from requests import Session
 
 from openimage_backend_lib import database_models as models
 from openimage_backend_lib import repository as repo_module
+from openimage_backend_lib import telegram
 
 dynamodb_client = boto3.client("dynamodb")
 environment = repo_module.EnvironmentInfo()
 repository = repo_module.Repository(dynamodb_client, environment)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+
+telegram_client = telegram.get_telegram(Session())
+
 
 def connection_handler(event, context):
     """"
@@ -67,5 +72,5 @@ def connection_handler(event, context):
     connection_id = _.get(event, "requestContext.connectionId")
     repository.add_connection(connection_id)
     logger.info("Connection request received.")
-
+    telegram_client.send_message(f"New connection: {connection_id}")
     return {"statusCode": 200, "body": "You're connected, but not authorized."}
