@@ -137,6 +137,26 @@ class Repository:
             }
         )
 
+    def set_failed_status_for_request(self, request_id: str) -> None:
+        logger.info("Setting status to 'failed' on request: %s", request_id)
+
+        iso, ts = get_iso_and_timestamp_now()
+
+        self.ddb.update_item(
+            TableName=self.environment.request_table_name,
+            Key={
+                Metadata.RequestTable.primary_key: {
+                    "S": request_id
+                }
+            },
+            UpdateExpression="SET request_status = :rs, update_time_iso = :uti, update_time_timestamp = :utt",
+            ExpressionAttributeValues={
+                ":rs": {"S": "failed"},
+                ":uti": {"S": iso},
+                ":utt": {"S": ts},
+            }
+        )
+
     def set_s3_path_for_request(self, request_id: str, s3_url: str) -> None:
         logger.info("Setting s3_url: %s on request: %s",
                     s3_url, request_id)

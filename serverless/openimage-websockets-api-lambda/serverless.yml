@@ -46,7 +46,7 @@ provider:
     # Others
     SQS_REQUEST_URL: ${self:custom.imageProcessingQueueUrl}
     AUTHORIZER_STAGE: ${self:provider.stage}
-    API_ID: qwd67w7upb
+    API_ID: d-x4ztubcid1
     GOOGLE_OAUTH_APP_ID: ${self:custom.googleOAuthAppID}
     DEVELOPER_GOOGLE_USER_ID: ${ssm:/dev/develop-google-user-id} # Only exists in dev stage
     WS_SECRET_PASS: ${ssm:/dev/websockets-api/admin-creds} # Only exists in dev stage
@@ -120,6 +120,7 @@ functions:
 
   databaseUpdateHandler:
     handler: event_handlers.update
+    timeout: 30
     layers:
       - Ref: PythonRequirementsLambdaLayer
     events:

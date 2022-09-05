@@ -76,22 +76,40 @@ def update_handler(event, context):
         reader = DynamoDBRecordReader(record)
         request_status = reader.get("request_status")
         logger.info("Request status: %s", request_status)
-        if request_status == "completed":
-            s3_url = reader.get("s3_url")
-            unique_user_id = reader.get("requester_unique_user_id")
-            user = repository.get_user_by_unique_id(unique_user_id)
-            if user.connection_status == "connected":
+
+        unique_user_id = reader.get("requester_unique_user_id")
+        user = repository.get_user_by_unique_id(unique_user_id)
+
+        if user.connection_status == "connected":
+            request_id = reader.get("request_id")
+            update_time_iso = reader.get("update_time_iso")
+            if request_status == "completed":
+                s3_url = reader.get("s3_url")
                 payload = json.dumps({
                     "message_type": "job_complete",
                     "data": {
                         "s3_url": s3_url,
                         "prompt": reader.get("data"),
-                        "update_time_iso": reader.get("update_time_iso"),
-                        "request_id": reader.get("request_id"),
+                        "update_time_iso": update_time_iso,
+                        "request_id": request_id,
                     }
                 })
+            elif request_status == "failed":
+                payload = json.dumps({
+                    "message_type": "job_failed",
+                    "data": {
+                        "request_id": request_id,
+                        "update_time_iso": update_time_iso
+                    }
+                })
+            else:
+                logger.error("Unrecognized request_status: %s", request_status)
+                break
 
-                api_client.post_to_connection(
-                    Data=payload,
-                    ConnectionId=user.connection_id
-                )
+            logger.info(
+                "Posting message back to user, using connection id: %s", user.connection_id)
+            logger.info("Paylod: %s", payload)
+            api_client.post_to_connection(
+                Data=payload,
+                ConnectionId=user.connection_id
+            )

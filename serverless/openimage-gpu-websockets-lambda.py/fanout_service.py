@@ -1,16 +1,17 @@
 import json
 import logging
 import os
+import sys
+import traceback
+from time import sleep
 
 import boto3
-
 import pydantic
+from requests import Session
+
 from openimage_backend_lib import database_models as models
 from openimage_backend_lib import repository as repo_module
-import traceback
-
-from time import sleep
-import sys
+from openimage_backend_lib import telegram
 
 API_ID = os.environ["API_ID"]
 STAGE = os.environ["AUTHORIZER_STAGE"]
@@ -28,6 +29,7 @@ environment = repo_module.EnvironmentInfo()
 repository = repo_module.Repository(dynamodb_client, environment)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+telegram_client = telegram.get_telegram(Session())
 
 
 def handler(event, context):
@@ -69,7 +71,9 @@ def handler(event, context):
     data = json_body["data"]
     request_id = json_body["unique_request_id"]
     user_unique_id = json_body["requester_unique_user_id"]
-
+    has_job_started = False
+    found_gpu_node = False
+    excp = ""
     if json_body["request_type"] == "prompt":
         # Find an available node
         # Presign an S3 post URL
@@ -77,8 +81,8 @@ def handler(event, context):
         nodes = repository.scan_api_tokens()
         for node in nodes:
             if node.node_status == "ready":
+                found_gpu_node = True
                 # Found a node to use
-                has_job_started = False
                 repository.set_status_for_token(
                     api_token=node.api_token, status="scheduling")
                 try:
@@ -98,22 +102,26 @@ def handler(event, context):
                         ConnectionId=node.connection_id
                     )
                     has_job_started = True
+                    repository.set_unique_user_id_for_request(
+                        request_id=request_id, unique_user_id=node.unique_user_id)
                 except Exception as excp:
                     logger.error("Exception: %s", str(excp))
                     traceback.print_exc(file=sys.stdout)
                 finally:
-                    # If something goes wrong, reset node status, so it doesn't get locked out
-                    # Sleep a bit to avoid concurrency issues
-                    if not has_job_started:
-                        sleep(1.0)
-                        repository.set_status_for_token(
-                            api_token=node.api_token, status="ready")
-                        raise ValueError(
-                            f"Failed to run job for request_id: {request_id}")
-                    else:
-                        # Set gpu_user_id
-                        repository.set_unique_user_id_for_request(
-                            request_id=request_id, unique_user_id=node.unique_user_id)
+                    sleep(1.0)
+                    repository.set_status_for_token(
+                        api_token=node.api_token, status="ready")
+
+        if not found_gpu_node or not has_job_started:
+            repository.set_failed_status_for_request(request_id)
+        if not found_gpu_node:
+            telegram_client.send_message(
+                f"Job {request_id} has failed. Reason: no GPU nodes are in ready state.")
+        if not has_job_started:
+            telegram_client.send_message(
+                f"Job {request_id} has failed. Exception: {excp}")
+            raise ValueError(
+                f"Failed to run job for request_id: {request_id}")
     else:
         raise TypeError(
             f"request_type of type {request_type} is not supported by the fanout service")
