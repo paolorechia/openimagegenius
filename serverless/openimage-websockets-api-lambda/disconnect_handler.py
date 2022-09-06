@@ -3,19 +3,15 @@ import logging
 import boto3
 import pydantic
 import pydash as _
-from requests import Session
 
 from openimage_backend_lib import database_models as models
 from openimage_backend_lib import repository as repo_module
-from openimage_backend_lib import telegram
 
 dynamodb_client = boto3.client("dynamodb")
 environment = repo_module.EnvironmentInfo()
 repository = repo_module.Repository(dynamodb_client, environment)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-
-telegram_client = telegram.get_telegram(Session())
 
 
 def disconnect_handler(event, context):
@@ -74,6 +70,5 @@ def disconnect_handler(event, context):
     if connection.unique_user_id:
         repository.set_disconnect_for_user(connection.unique_user_id)
         logger.info("Disconnected request received.")
-        telegram_client.send_message(f"User disconnected: {connection_id}")
     repository.delete_connection(connection_id)
     return {"statusCode": 200, "body": "You're disconnected."}
