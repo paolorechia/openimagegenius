@@ -26,7 +26,7 @@ async def test_request_rejected():
         await websocket.send(request_event)
         response = await websocket.recv()
         print("Got response:", response)
-        assert response == '{"message_type": "error, "data": "You\'re not authorized. Please send your valid token first."}'
+        assert response == '{"message_type": "error", "data": "You\'re not authorized. Please send your valid token first."}'
 
 
 @pytest.mark.asyncio
