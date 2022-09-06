@@ -294,50 +294,50 @@ class JobHandler:
 
 async def main():
     config = Config()
+
     logger.setLevel(config.user_config.log_level)
+    logger.info("Loading GPU client...")
+    gpu_client = HuggingGPU(config.hugging_face_token)
 
-    logger.info("Connecting to WS Gateway...")
-    async with websockets.connect(
-        config.ws_endpoint,
-        extra_headers={
-            "Authorization": config.token
-        }
-    ) as ws:
-        ws_client = WebsocketsClient(ws)
-        logger.info("Starting WS Client...")
+    logger.info("Starting Job Handler...")
+    job_handler = JobHandler(gpu_client)
+    error_count = 0
 
-        await ws_client.send_initializing_state()
-        logger.info("Loading GPU client...")
-        gpu_client = HuggingGPU(config.hugging_face_token)
-        logger.info("Starting Job Handler...")
-        job_handler = JobHandler(gpu_client)
-        error_count = 0
-        logger.info("Sending ready state...")
-        await ws_client.send_ready_state(vram=config.user_config.vram)
-        logger.info("Ready! Waiting for message...")
-
-        async for message in ws:
-            logger.info("Received message: %s", message)
-            parsed, type_, error_message = message_parser(message)
-            if error_message:
-                logger.error("Failed to parse message: %s", error_message)
-                await ws_client.send_error_message(error_message)
-
-            request_id = parsed.request_id
-            is_success = False
-            try:
-                is_success = job_handler.handle_job(parsed)
-            except Exception as excp:
-                warnings.warn(f"Job failed: {str(excp)}")
-            if is_success:
-                await ws_client.send_job_completed(request_id)
-            else:
-                await ws_client.send_job_failed(request_id)
-                error_count += 1
+    while True:
+        logger.info("Connecting to WS Gateway...")
+        async with websockets.connect(
+            config.ws_endpoint,
+            extra_headers={
+                "Authorization": config.token
+            }
+        ) as ws:
+            ws_client = WebsocketsClient(ws)
+            logger.info("Starting WS Client...")
             logger.info("Sending ready state...")
             await ws_client.send_ready_state(vram=config.user_config.vram)
             logger.info("Ready! Waiting for message...")
 
+            async for message in ws:
+                logger.info("Received message: %s", message)
+                parsed, type_, error_message = message_parser(message)
+                if error_message:
+                    logger.error("Failed to parse message: %s", error_message)
+                    await ws_client.send_error_message(error_message)
+
+                request_id = parsed.request_id
+                is_success = False
+                try:
+                    is_success = job_handler.handle_job(parsed)
+                except Exception as excp:
+                    warnings.warn(f"Job failed: {str(excp)}")
+                if is_success:
+                    await ws_client.send_job_completed(request_id)
+                else:
+                    await ws_client.send_job_failed(request_id)
+                    error_count += 1
+                logger.info("Sending ready state...")
+                logger.info("Ready! Waiting for message...")
+        logger.info("Connection dropped? Reconnecting...")
 
 if __name__ == "__main__":
     asyncio.run(main())
