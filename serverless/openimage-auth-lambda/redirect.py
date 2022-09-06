@@ -142,6 +142,8 @@ def handler(event, context):
         "user_email": user_google_email
     }
     logger.info("Successful, authenticated user: %s", str(body))
+    telegram_client.send_message(f"User authenticated: {unique_user_id}")
+
     response = {
         "statusCode": 200,
         "body": html_success_page.format(stage),
@@ -149,4 +151,5 @@ def handler(event, context):
             "Set-Cookie": f"token={token}; Domain=openimagegenius.com; Secure",
             "Content-Type": "text/html"
         }}
+    
     return response
