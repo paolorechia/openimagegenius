@@ -83,8 +83,6 @@ def handler(event, context):
             if node.node_status == "ready":
                 found_gpu_node = True
                 # Found a node to use
-                repository.set_status_for_token(
-                    api_token=node.api_token, status="scheduling")
                 try:
                     s3_upload_details = s3_client.generate_presigned_post(
                         Bucket=s3_bucket,
