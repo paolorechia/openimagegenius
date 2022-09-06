@@ -4,7 +4,7 @@ import json
 import pytest
 
 
-test_endpoint = "wss://qwd67w7upb.execute-api.eu-central-1.amazonaws.com/dev"
+test_endpoint = "wss://dev.ws-api.openimagegenius.com"
 with open(".ws_secret_pass", "r") as fp:
     ws_secret_pass = fp.read().strip()
 
@@ -26,7 +26,8 @@ async def test_request_rejected():
         await websocket.send(request_event)
         response = await websocket.recv()
         print("Got response:", response)
-        assert response == "You're not authorized. Please send your valid token first."
+        assert response == '{"message_type": "error, "data": "You\'re not authorized. Please send your valid token first."}'
+
 
 @pytest.mark.asyncio
 async def test_authorization():
@@ -34,15 +35,17 @@ async def test_authorization():
         await websocket.send(authorization_event)
         response = await websocket.recv()
         print("Got response:", response)
-        assert response == "authorized"
+        assert response == '{"message_type": "authorization", "data": "authorized"}'
+
 
 @pytest.mark.asyncio
 async def test_authorized_request():
     async with websockets.connect(test_endpoint) as websocket:
         await websocket.send(authorization_event)
         response = await websocket.recv()
-        assert response == "authorized"
+        assert response == '{"message_type": "authorization", "data": "authorized"}'
         await websocket.send(request_event)
         response = await websocket.recv()
         print("Got response:", response)
-        assert response == "Request Accepted."
+        j = json.loads(response)
+        assert j["message_type"] == "request_accepted"
