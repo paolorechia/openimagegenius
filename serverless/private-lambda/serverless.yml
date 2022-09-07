@@ -10,6 +10,7 @@ package:
     - "!node_modules/**"
     - "!.serverless"
     - "!.gitignore"
+    - "!packages"
     - "!package.json"
     - "!package-lock.json"
     - "!pytest.ini"

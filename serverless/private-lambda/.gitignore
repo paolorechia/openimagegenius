@@ -1,0 +1,4 @@
+.serverless
+.serverless/**
+packages
+build
