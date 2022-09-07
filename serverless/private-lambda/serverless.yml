@@ -11,6 +11,7 @@ package:
     - "!.serverless"
     - "!.gitignore"
     - "!packages"
+    - "!models"
     - "!package.json"
     - "!package-lock.json"
     - "!pytest.ini"

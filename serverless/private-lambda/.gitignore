@@ -2,3 +2,4 @@
 .serverless/**
 packages
 build
+models
