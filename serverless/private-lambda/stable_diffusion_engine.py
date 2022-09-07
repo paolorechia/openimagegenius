@@ -9,6 +9,7 @@ from tqdm import tqdm
 from huggingface_hub import hf_hub_download
 from diffusers import LMSDiscreteScheduler, PNDMScheduler
 import cv2
+import os
 
 
 def result(var):
@@ -19,7 +20,7 @@ class StableDiffusionEngine:
     def __init__(
             self,
             scheduler,
-            model="bes-dev/stable-diffusion-v1-4-openvino",
+            models_dir,
             tokenizer="openai/clip-vit-large-patch14",
             device="CPU"
     ):
@@ -30,27 +31,27 @@ class StableDiffusionEngine:
         self.core.set_property("CPU", {"INFERENCE_NUM_THREADS": 8})
         # text features
         self._text_encoder = self.core.read_model(
-            hf_hub_download(repo_id=model, filename="text_encoder.xml"),
-            hf_hub_download(repo_id=model, filename="text_encoder.bin")
+            os.path.join(models_dir, "text_encoder.xml"),
+            os.path.join(models_dir, "text_encoder.bin"),
         )
         self.text_encoder = self.core.compile_model(self._text_encoder, device)
         # diffusion
         self._unet = self.core.read_model(
-            hf_hub_download(repo_id=model, filename="unet.xml"),
-            hf_hub_download(repo_id=model, filename="unet.bin")
+            os.path.join(models_dir, "unet.xml"),
+            os.path.join(models_dir, "unet.bin")
         )
         self.unet = self.core.compile_model(self._unet, device)
         self.latent_shape = tuple(self._unet.inputs[0].shape)[1:]
         # decoder
         self._vae_decoder = self.core.read_model(
-            hf_hub_download(repo_id=model, filename="vae_decoder.xml"),
-            hf_hub_download(repo_id=model, filename="vae_decoder.bin")
+            os.path.join(models_dir, "vae_decoder.xml"),
+            os.path.join(models_dir, "vae_decoder.bin")
         )
         self.vae_decoder = self.core.compile_model(self._vae_decoder, device)
         # encoder
         self._vae_encoder = self.core.read_model(
-            hf_hub_download(repo_id=model, filename="vae_encoder.xml"),
-            hf_hub_download(repo_id=model, filename="vae_encoder.bin")
+            os.path.join(models_dir, "vae_encoder.xml"),
+            os.path.join(models_dir, "vae_encoder.bin")
         )
         self.vae_encoder = self.core.compile_model(self._vae_encoder, device)
         self.init_image_shape = tuple(self._vae_encoder.inputs[0].shape)[2:]
