@@ -1,0 +1,123 @@
+service: openimagegenius-private-lambda
+
+plugins:
+  - serverless-s3-sync
+
+frameworkVersion: "3"
+
+package:
+  patterns:
+    - "!node_modules/**"
+    - "!.serverless"
+    - "!.gitignore"
+    - "!package.json"
+    - "!package-lock.json"
+    - "!pytest.ini"
+    - "!build/**"
+    - "!.requirements.zip"
+
+provider:
+  name: aws
+  runtime: python3.8
+  stage: ${opt:stage}
+  region: eu-central-1
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - "s3:GetObject"
+          Resource:
+            - "arn:aws:s3:::${self:custom.bucketName}/*"
+        - Effect: Allow
+          Action:
+            - "elasticfilesystem:*"
+          Resource:
+            - "arn:aws:elasticfilesystem:${aws:region}:${aws:accountId}:file-system/${self:custom.fileSystemId}"
+            - "arn:aws:elasticfilesystem:${aws:region}:${aws:accountId}:access-point/${self:custom.efsAccessPoint}"
+
+  environment:
+    INSTALLER_BUCKET_NAME: ${self:custom.bucketName}
+    MNT_DIR: ${self:custom.LocalMountPath}
+    LIB_DIR: ${self:custom.LocalMountPath}/lib
+
+custom:
+  bucketName: openimagegenius-lib-deps-${self:provider.stage}
+  s3Sync:
+    # An example of possible configuration options
+    - bucketName: ${self:custom.bucketName}
+      localDir: ./build
+      deleteRemoved: true # optional, indicates whether sync deletes files no longer present in localDir. Defaults to 'true'
+      bucketTags:
+        stage: ${self:provider.stage}
+  cpuInferenceQueueName: cpu-inference-queue-${self:provider.stage}
+  efsAccessPoint: fsap-02b1e5537050b4b00
+  fileSystemId: fs-0da04afa371bf03bb
+  LocalMountPath: /mnt/fs
+  subnetsId:
+    subnet0: subnet-0ed9de83d95d1e92a
+    subnet1: subnet-0715a0abeac796c95
+  securityGroup: sg-0417057691bba741f
+
+functions:
+  installDependencies:
+    handler: installer.handler
+    timeout: 90
+    vpc:
+      securityGroupIds:
+        - ${self:custom.securityGroup}
+      subnetIds:
+        - ${self:custom.subnetsId.subnet0}
+
+  infer:
+    handler: inference.handler
+    timeout: 30
+    vpc:
+      securityGroupIds:
+        - ${self:custom.securityGroup}
+      subnetIds:
+        - ${self:custom.subnetsId.subnet0}
+        - ${self:custom.subnetsId.subnet1}
+
+resources:
+  Resources:
+    DependenciesBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.bucketName}
+
+  extensions:
+    InstallDependenciesLambdaFunction:
+      Properties:
+        FileSystemConfigs:
+          - Arn: "arn:aws:elasticfilesystem:${self:provider.region}:${aws:accountId}:access-point/${self:custom.efsAccessPoint}"
+            LocalMountPath: "${self:custom.LocalMountPath}"
+    InferLambdaFunction:
+      Properties:
+        FileSystemConfigs:
+          - Arn: "arn:aws:elasticfilesystem:${self:provider.region}:${aws:accountId}:access-point/${self:custom.efsAccessPoint}"
+            LocalMountPath: "${self:custom.LocalMountPath}"
+
+  #   CpuInferenceQueueDLQ:
+  #     Type: AWS::SQS::Queue
+  #     Properties:
+  #       DelaySeconds: 0
+  #       QueueName: dead-letter-${self:custom.cpuInferenceQueueName}
+  #       VisibilityTimeout: 30
+
+  #   CpuInferenceQueue:
+  #     Type: AWS::SQS::Queue
+  #     Properties:
+  #       DelaySeconds: 0
+  #       QueueName: ${self:custom.cpuInferenceQueueName}
+  #       RedrivePolicy:
+  #         deadLetterTargetArn: !GetAtt CpuInferenceQueueDLQ.Arn
+  #         maxReceiveCount: 1
+  #       VisibilityTimeout: 30
+
+  # Outputs:
+  #   CpuInferenceQueueName:
+  #     Export:
+  #       Name: cpu-inference-queue-${self:provider.stage}-arn
+  #     Value:
+  #       Fn::GetAtt: CpuInferenceQueue.Arn

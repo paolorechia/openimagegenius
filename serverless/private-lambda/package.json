@@ -1,0 +1,15 @@
+{
+  "name": "private-lambda",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "serverless": "^3.22.0",
+    "serverless-s3-sync": "^3.0.0"
+  }
+}
