@@ -23,6 +23,7 @@ provider:
   runtime: python3.8
   stage: ${opt:stage}
   region: eu-central-1
+  memorySize: 3008
   iam:
     role:
       statements:
@@ -100,26 +101,9 @@ resources:
           - Arn: "arn:aws:elasticfilesystem:${self:provider.region}:${aws:accountId}:access-point/${self:custom.efsAccessPoint}"
             LocalMountPath: "${self:custom.LocalMountPath}"
 
-  #   CpuInferenceQueueDLQ:
-  #     Type: AWS::SQS::Queue
-  #     Properties:
-  #       DelaySeconds: 0
-  #       QueueName: dead-letter-${self:custom.cpuInferenceQueueName}
-  #       VisibilityTimeout: 30
-
-  #   CpuInferenceQueue:
-  #     Type: AWS::SQS::Queue
-  #     Properties:
-  #       DelaySeconds: 0
-  #       QueueName: ${self:custom.cpuInferenceQueueName}
-  #       RedrivePolicy:
-  #         deadLetterTargetArn: !GetAtt CpuInferenceQueueDLQ.Arn
-  #         maxReceiveCount: 1
-  #       VisibilityTimeout: 30
-
-  # Outputs:
-  #   CpuInferenceQueueName:
-  #     Export:
-  #       Name: cpu-inference-queue-${self:provider.stage}-arn
-  #     Value:
-  #       Fn::GetAtt: CpuInferenceQueue.Arn
+  Outputs:
+    CpuInferenceLambdaArn:
+      Export:
+        Name: cpu-inference-lambda-${self:provider.stage}-arn
+      Value:
+        Fn::GetAtt: InferLambdaFunction.Arn
