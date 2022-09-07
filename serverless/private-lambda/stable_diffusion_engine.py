@@ -6,7 +6,6 @@ from openvino.runtime import Core
 from transformers import CLIPTokenizer
 # utils
 from tqdm import tqdm
-from huggingface_hub import hf_hub_download
 from diffusers import LMSDiscreteScheduler, PNDMScheduler
 import cv2
 import os

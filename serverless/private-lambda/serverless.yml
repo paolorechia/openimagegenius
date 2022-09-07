@@ -43,6 +43,7 @@ provider:
     INSTALLER_BUCKET_NAME: ${self:custom.bucketName}
     MNT_DIR: ${self:custom.LocalMountPath}
     LIB_DIR: ${self:custom.LocalMountPath}/lib
+    MODELS_DIR: ${self:custom.LocalMountPath}/models
 
 custom:
   bucketName: openimagegenius-lib-deps-${self:provider.stage}
