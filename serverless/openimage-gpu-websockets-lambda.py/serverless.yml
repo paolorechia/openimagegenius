@@ -40,11 +40,11 @@ provider:
     CONNECTION_IP_ADRESS_INDEX: ${self:custom.databaseInfo.connectionIpAddressIndex}
 
     # Telegram
-    TELEGRAM_TOKEN: ${ssm:/dev/telegram/token}
-    TELEGRAM_CHAT_ID: ${ssm:/dev/telegram/chat_id}
+    TELEGRAM_TOKEN: ${ssm:/{self:provider.stage}/telegram/token}
+    TELEGRAM_CHAT_ID: ${ssm:/{self:provider.stage}/telegram/chat_id}
     # Others
     AUTHORIZER_STAGE: ${self:provider.stage}
-    API_ID: cwo3f8h30b
+    API_ID: ${self:custom.apiGatewayId}
     S3_BUCKET: ${self:custom.generatedImagesBucket}
 
   iam:
@@ -116,7 +116,7 @@ functions:
     timeout: 28
     events:
       - sqs:
-          arn: ${cf:openimagegenius-websockets-api-dev.ImageProcessingQueue}
+          arn: ${cf:openimagegenius-websockets-api-{self:provider.stage}.ImageProcessingQueue}
           batchSize: 1
     layers:
       - Ref: PythonRequirementsLambdaLayer
@@ -140,8 +140,16 @@ plugins:
 
 custom:
   generatedImagesBucket: open-image-genius-generated-images-${self:provider.stage}
+  apiGatewayIdMapping:
+    dev: cwo3f8h30b
+    prod: TO_FILL_IN
+  apiGatewayId:
+    ${self:custom.apiGatewayIdMapping.${self:provider.stage}}
+  domainName:
+    dev: ${self:provider.stage}.ws-gpus.openimagegenius.com
+    prod: ws-gpus.openimagegenius.com
   customDomain:
-    domainName: ${self:provider.stage}.ws-gpus.openimagegenius.com
+    domainName: ${self:custom.domainName.${self:provider.stage}}
     stage: ${self:provider.stage}
     createRoute53Record: true
     endpointType: REGIONAL

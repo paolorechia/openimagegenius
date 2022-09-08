@@ -41,13 +41,14 @@ provider:
     CONNECTION_IP_ADRESS_INDEX: ${self:custom.databaseInfo.connectionIpAddressIndex}
 
     # Telegram
-    TELEGRAM_TOKEN: ${ssm:/dev/telegram/token}
-    TELEGRAM_CHAT_ID: ${ssm:/dev/telegram/chat_id}
+    TELEGRAM_TOKEN: ${ssm:/{self:provider.stage}/telegram/token}
+    TELEGRAM_CHAT_ID: ${ssm:/{self:provider.stage}/telegram/chat_id}
     # Others
     SQS_REQUEST_URL: ${self:custom.imageProcessingQueueUrl}
     AUTHORIZER_STAGE: ${self:provider.stage}
-    API_ID: 93a3t6qore
+    API_ID: ${self:custom.apiGatewayId}
     GOOGLE_OAUTH_APP_ID: ${self:custom.googleOAuthAppID}
+
     DEVELOPER_GOOGLE_USER_ID: ${ssm:/dev/develop-google-user-id} # Only exists in dev stage
     WS_SECRET_PASS: ${ssm:/dev/websockets-api/admin-creds} # Only exists in dev stage
 
@@ -126,7 +127,7 @@ functions:
     events:
       - stream:
           type: dynamodb
-          arn: ${cf:openimagegenius-database-dev.RequestTableStreamArn}
+          arn: ${cf:openimagegenius-database-${self:provider.stage}.RequestTableStreamArn}
           batchSize: 1
           filterPatterns:
             - eventName: [MODIFY]
@@ -146,8 +147,15 @@ plugins:
 custom:
   imageProcessingQueueName: image-processing-${self:provider.stage}
   imageProcessingQueueUrl: !Ref ImageProcessingQueue
+  apiGatewayIdMapping:
+    dev: 93a3t6qore
+    prod: TO_FILL_IN
+  apiGatewayId: ${self:custom.apiGatewayIdMapping.${self:provider.stage}}
+  domainName:
+    dev: ${self:provider.stage}.ws-api.openimagegenius.com
+    prod: ws-api.openimagegenius.com
   customDomain:
-    domainName: ${self:provider.stage}.ws-api.openimagegenius.com
+    domainName: ${self:custom.domainName.${self:provider.stage}}
     stage: ${self:provider.stage}
     createRoute53Record: true
     endpointType: REGIONAL
@@ -160,6 +168,7 @@ custom:
   databaseInfo: ${file(../database/serverless.yml):custom}
   OAuthAppIDMapping:
     dev: ${ssm:/dev/google-oauth-app-id}
+    prod: ${ssm:/prod/google-oauth-app-id}
   googleOAuthAppID: ${self:custom.OAuthAppIDMapping.${self:provider.stage}}
 
 resources:
