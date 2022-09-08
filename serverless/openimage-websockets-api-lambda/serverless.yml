@@ -41,8 +41,8 @@ provider:
     CONNECTION_IP_ADRESS_INDEX: ${self:custom.databaseInfo.connectionIpAddressIndex}
 
     # Telegram
-    TELEGRAM_TOKEN: ${ssm:/{self:provider.stage}/telegram/token}
-    TELEGRAM_CHAT_ID: ${ssm:/{self:provider.stage}/telegram/chat_id}
+    TELEGRAM_TOKEN: ${ssm:/${self:provider.stage}/telegram/token}
+    TELEGRAM_CHAT_ID: ${ssm:/${self:provider.stage}/telegram/chat_id}
     # Others
     SQS_REQUEST_URL: ${self:custom.imageProcessingQueueUrl}
     AUTHORIZER_STAGE: ${self:provider.stage}
@@ -140,6 +140,7 @@ functions:
                 NewImage:
                   request_status:
                     S: [failed]
+
 plugins:
   - serverless-domain-manager
   - serverless-python-requirements

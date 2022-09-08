@@ -36,8 +36,11 @@ function WebsocketManagerFactory() {
     }
     this.WebsocketConnection = function () {
         const ws_endpoints = {
-            "dev": "wss://dev.ws-api.openimagegenius.com"
+            "dev": "wss://dev.ws-api.openimagegenius.com",
+            "prod": "wss://ws-api.openimagegenius.com"
         }
+        const stage = process.env.REACT_APP_ENV;
+        const ws_endpoint = ws_endpoints[stage];
         function getTokenCookie() {
             let decodedCookie = decodeURIComponent(document.cookie);
             const cookies = decodedCookie.split(";")
@@ -69,7 +72,7 @@ function WebsocketManagerFactory() {
             // Oh no, do something about this
         }
 
-        const websocket = new WebSocket(ws_endpoints["dev"])
+        const websocket = new WebSocket(ws_endpoint)
 
         // Register event listeners
         websocket.addEventListener("error", (error) => {
