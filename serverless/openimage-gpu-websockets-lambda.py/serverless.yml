@@ -116,7 +116,7 @@ functions:
     timeout: 28
     events:
       - sqs:
-          arn: ${cf:openimagegenius-websockets-api-{self:provider.stage}.ImageProcessingQueue}
+          arn: ${cf:openimagegenius-websockets-api-${self:provider.stage}.ImageProcessingQueue}
           batchSize: 1
     layers:
       - Ref: PythonRequirementsLambdaLayer
