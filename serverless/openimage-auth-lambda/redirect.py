@@ -29,7 +29,7 @@ telegram_client = telegram.get_telegram(http_session)
 
 app_endpoints = {
     "dev": "https://dev.app.openimagegenius.com",
-    "prod": "https://dev.app.openimagegenius.com"
+    "prod": "https://app.openimagegenius.com"
 }
 
 client_ids = {

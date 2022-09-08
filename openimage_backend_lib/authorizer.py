@@ -16,7 +16,8 @@ environment = repo_module.EnvironmentInfo()
 repository = repo_module.Repository(dynamodb_client, environment)
 
 client_ids = {
-    "dev": os.environ["GOOGLE_OAUTH_APP_ID"]
+    "dev": os.environ["GOOGLE_OAUTH_APP_ID"],
+    "prod": os.environ["GOOGLE_OAUTH_APP_ID"]
 }
 
 logger = logging.getLogger(__name__)
