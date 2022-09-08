@@ -19,10 +19,6 @@ dynamodb_client = boto3.client("dynamodb")
 environment = repo_module.EnvironmentInfo()
 repository = repo_module.Repository(dynamodb_client, environment)
 
-client_ids = {
-    "dev": os.environ["GOOGLE_OAUTH_APP_ID"]
-}
-
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
@@ -31,6 +27,15 @@ dynamo_db_client = boto3.client("dynamodb")
 http_session = Session()
 telegram_client = telegram.get_telegram(http_session)
 
+app_endpoints = {
+    "dev": "https://dev.app.openimagegenius.com",
+    "prod": "https://dev.app.openimagegenius.com"
+}
+
+client_ids = {
+    "dev": os.environ["GOOGLE_OAUTH_APP_ID"],
+    "prod": os.environ["GOOGLE_OAUTH_APP_ID"]
+}
 
 html_success_page = """
 <html>
@@ -40,7 +45,7 @@ html_success_page = """
     <body>
         <h2> Authentication Successful, Redirecting... </h2>
         <script>
-            location.assign("https://{}.app.openimagegenius.com")
+            location.assign("{}")
         </script>
     </body>
 </html>
@@ -146,10 +151,10 @@ def handler(event, context):
 
     response = {
         "statusCode": 200,
-        "body": html_success_page.format(stage),
+        "body": html_success_page.format(app_endpoints[stage]),
         "headers": {
             "Set-Cookie": f"token={token}; Domain=openimagegenius.com; Secure",
             "Content-Type": "text/html"
         }}
-    
+
     return response

@@ -12,12 +12,18 @@ provider:
   region: eu-central-1
 
 custom:
-  bucketName: ${self:provider.stage}.auth.openimagegenius.com
-  webAppBucketName: ${self:provider.stage}.app.openimagegenius.com
+  bucketMapping:
+    dev: ${self:provider.stage}.auth.openimagegenius.com
+    prod: auth.openimagegenius.com
+  webAppBucketNameMapping:
+    dev: ${self:provider.stage}.app.openimagegenius.com
+    prod: app.openimagegenius.com
+  bucketName: ${self:custom.bucketMapping.${self:provider.stage}}
+  webAppBucketName: ${self:custom.webAppBucketNameMapping.${self:provider.stage}}
   s3Sync:
     # An example of possible configuration options
     - bucketName: ${self:custom.bucketName}
-      localDir: ./website
+      localDir: ./${self:provider.stage}-website
       deleteRemoved: true # optional, indicates whether sync deletes files no longer present in localDir. Defaults to 'true'
       followSymlinks: true # optional
       defaultContentType: text/html # optional
@@ -30,7 +36,7 @@ custom:
         stage: ${self:provider.stage}
 
     - bucketName: ${self:custom.webAppBucketName}
-      localDir: ./web-app/build
+      localDir: ./web-app/build-${self:provider.stage}
       deleteRemoved: true # optional, indicates whether sync deletes files no longer present in localDir. Defaults to 'true'
       followSymlinks: true # optional
       defaultContentType: text/html # optional

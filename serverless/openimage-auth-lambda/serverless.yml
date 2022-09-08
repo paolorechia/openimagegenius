@@ -47,11 +47,12 @@ provider:
     # Others
     GOOGLE_OAUTH_APP_ID: ${self:custom.googleOAuthAppID}
     AUTHORIZER_STAGE: ${self:provider.stage}
+
     DEVELOPER_GOOGLE_USER_ID: ${ssm:/dev/develop-google-user-id} # Only exists in dev stage
     WS_SECRET_PASS: ${ssm:/dev/websockets-api/admin-creds} # Only exists in dev stage
     # Telegram
-    TELEGRAM_TOKEN: ${ssm:/{self:provider.stage}/telegram/token}
-    TELEGRAM_CHAT_ID: ${ssm:/{self:provider.stage}/telegram/chat_id}
+    TELEGRAM_TOKEN: ${ssm:/${self:provider.stage}/telegram/token}
+    TELEGRAM_CHAT_ID: ${ssm:/${self:provider.stage}/telegram/chat_id}
 
 functions:
   redirect:

@@ -1,3 +1,5 @@
+import argparse
+
 from PIL import Image
 from torch import autocast
 from diffusers import StableDiffusionPipeline
@@ -46,10 +48,11 @@ class Config:
     HUGGING_FACE_CONFIG_DIR = os.path.join(os.environ["HOME"], ".huggingface")
     HUGGING_FACE_TOKEN_FILENAME = "token"
 
-    def __init__(self) -> None:
-        self.stage = "dev"
+    def __init__(self, stage) -> None:
+        self.stage = stage
         self.available_endpoints = {
-            "dev": "wss://dev.ws-gpus.openimagegenius.com"
+            "dev": "wss://dev.ws-gpus.openimagegenius.com",
+            "prod": "wss://ws-gpus.openimagegenius.com"
         }
         self.ws_endpoint = self.available_endpoints[self.stage]
         token_filepath = os.path.join(Config.CONFIG_DIR, Config.API_FILENAME)
@@ -292,8 +295,8 @@ class JobHandler:
         return False
 
 
-async def main():
-    config = Config()
+async def main(stage):
+    config = Config(stage=stage)
 
     logger.setLevel(config.user_config.log_level)
     logger.info("Loading GPU client...")
@@ -340,4 +343,10 @@ async def main():
         logger.info("Connection dropped? Reconnecting...")
 
 if __name__ == "__main__":
-    asyncio.run(main())
+
+    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser.add_argument('--stage', dest='stage', type=str, default="dev",
+                        help='environment to connect to')
+    args = parser.parse_args()
+    print("Using stage ", args.stage)
+    asyncio.run(main(args.stage))
