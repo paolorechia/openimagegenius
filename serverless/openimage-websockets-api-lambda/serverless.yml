@@ -150,7 +150,7 @@ custom:
   imageProcessingQueueUrl: !Ref ImageProcessingQueue
   apiGatewayIdMapping:
     dev: 93a3t6qore
-    prod: TO_FILL_IN
+    prod: 7lbivoro5h
   apiGatewayId: ${self:custom.apiGatewayIdMapping.${self:provider.stage}}
   domainName:
     dev: ${self:provider.stage}.ws-api.openimagegenius.com

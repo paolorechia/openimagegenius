@@ -142,7 +142,7 @@ custom:
   generatedImagesBucket: open-image-genius-generated-images-${self:provider.stage}
   apiGatewayIdMapping:
     dev: cwo3f8h30b
-    prod: TO_FILL_IN
+    prod: 3r1ifo4vod
   apiGatewayId:
     ${self:custom.apiGatewayIdMapping.${self:provider.stage}}
   domainName:
