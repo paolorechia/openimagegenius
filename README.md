@@ -8,4 +8,9 @@ You can then use it here:
 
 https://dev.auth.openimagegenius.com/
 
+Or here:
+
+https://auth.openimagegenius.com/
+
+
 If you want to contribute, feel free to get in touch :)
