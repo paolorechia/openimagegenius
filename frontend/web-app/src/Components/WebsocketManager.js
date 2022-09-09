@@ -126,11 +126,10 @@ function WebsocketManagerFactory() {
                 }
             }
             if (obj.message_type === "get_requests_response") {
-                // this.setState({
-                //     ...this.state,
-                //     busy: true,
-                //     fetched_requests: [...this.state.fetched_requests, ...obj.]
-                // })
+                this.setState({
+                    ...this.state,
+                    requests: obj.data.requests
+                })
                 return // No need to notify
             }
 
@@ -138,7 +137,9 @@ function WebsocketManagerFactory() {
                 this.setState({
                     ...this.state,
                     busy: true,
-                    requests: [...this.state.requests, obj]
+                    requests: [...this.state.requests, obj],
+                    recent_requests: [...this.state.recent_requests, obj],
+
                 })
             }
 
@@ -157,9 +158,23 @@ function WebsocketManagerFactory() {
                     }
                     return request
                 })
+                let merged_recent_requests = this.state.recent_requests.map(request => {
+                    if (request.data.request_id === obj.data.request_id) {
+                        return {
+                            message_type: obj.message_type,
+                            data: {
+                                ...request.data,
+                                ...obj.data
+                            },
+                            busy: false,
+                        }
+                    }
+                    return request
+                })
                 this.setState({
                     ...this.state,
                     requests: merged_requests,
+                    recent_requests: merged_recent_requests
                 })
             }
             this.setNotifications([obj])

@@ -52,7 +52,7 @@ export default function RequestsMenu(props) {
 
             <List>
                 {
-                    props.websockets.state.requests.map(request => {
+                    props.websockets.state.recent_requests.map(request => {
                         return (
                             <Collapse key={request.data.request_id} in={true} timeout="auto" unmountOnExit>
                                 <List component="div" disablePadding>

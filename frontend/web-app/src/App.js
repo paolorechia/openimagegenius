@@ -14,14 +14,14 @@ import Unauthorized from './Components/Unauthorized';
 import Snackbar from '@mui/material/Snackbar';
 
 function App() {
-  const [selectedScreen, setScreen] = useState("prompt")
+  const [selectedScreen, setScreen] = useState("gallery")
   const [isWebsocketReady, setIsWebsocketReady] = useState(false)
   const [websocketState, setWebsocketState] = useState({
     "connected": false,
     "authorized": false,
     "busy": false,
     "requests": [],
-    "fetched_requests": []
+    "recent_requests": []
   })
   const [notifications, setNotifications] = useState([])
   const [isDrawerOpen, setIsDrawerOpen] = useState(true)
