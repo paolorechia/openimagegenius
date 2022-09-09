@@ -1,0 +1,28 @@
+service: openimagegenius-image-buckets
+
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  runtime: python3.8
+  stage: ${opt:stage}
+  region: eu-central-1
+
+custom:
+  bucketsMapping:
+    dev: ${self:provider.stage}.image.openimagegenius.com
+    prod: image.openimagegenius.com
+  generatedImagesBucket: ${self:custom.bucketsMapping.${self:provider.stage}}
+
+resources:
+  Resources:
+    GeneratedImagesBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.generatedImagesBucket}
+
+  Outputs:
+    GeneratedImagesBucket:
+      Export:
+        Name: generated-images-bucket-${self:provider.stage}
+      Value: ${self:custom.generatedImagesBucket}

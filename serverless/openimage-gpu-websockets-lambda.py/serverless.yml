@@ -3,8 +3,10 @@ frameworkVersion: "3"
 
 package:
   patterns:
+    - "!.pytest_cache"
+    - "!__pycache__"
     - "!manual_dist"
-    - "!node_modules/**"
+    - "!node_modules"
     - "!ws-client"
     - "!ws-server"
     - "!.ws_secret_pass"
@@ -14,7 +16,7 @@ package:
     - "!package-lock.json"
     - "!test_requirements.txt"
     - "!pytest.ini"
-    - "test_ws_server.py"
+    - "!test_ws_server.py"
     - "!.requirements.zip"
 
 provider:
@@ -139,12 +141,11 @@ plugins:
   - serverless-python-requirements
 
 custom:
-  generatedImagesBucket: open-image-genius-generated-images-${self:provider.stage}
+  generatedImagesBucket: ${cf:openimagegenius-image-buckets-${self:provider.stage}.GeneratedImagesBucket}
   apiGatewayIdMapping:
     dev: cwo3f8h30b
     prod: 3r1ifo4vod
-  apiGatewayId:
-    ${self:custom.apiGatewayIdMapping.${self:provider.stage}}
+  apiGatewayId: ${self:custom.apiGatewayIdMapping.${self:provider.stage}}
   domainName:
     dev: ${self:provider.stage}.ws-gpus.openimagegenius.com
     prod: ws-gpus.openimagegenius.com
@@ -160,10 +161,3 @@ custom:
     layer: true
     usePipenv: false
   databaseInfo: ${file(../database/serverless.yml):custom}
-
-resources:
-  Resources:
-    GeneratedImagesBucket:
-      Type: AWS::S3::Bucket
-      Properties:
-        BucketName: ${self:custom.generatedImagesBucket}

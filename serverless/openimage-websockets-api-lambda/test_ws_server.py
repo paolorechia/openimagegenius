@@ -49,22 +49,28 @@ async def test_request_rejected():
 @pytest.mark.asyncio
 async def test_authorized_request():
     websocket = await authorized_connection()
-    await websocket.send(request_event)
-    response = await websocket.recv()
-    print("Got response:", response)
-    j = json.loads(response)
-    assert j["message_type"] == "request_accepted"
+    try:
+        await websocket.send(request_event)
+        response = await websocket.recv()
+        print("Got response:", response)
+        j = json.loads(response)
+        assert j["message_type"] == "request_accepted"
+    finally:
+        await websocket.close()
 
 
 @pytest.mark.asyncio
 async def test_get_requests():
     websocket = await authorized_connection()
-    await websocket.send(get_requests_event)
-    response = await websocket.recv()
-    print("Got response:", response)
-    j = json.loads(response)
-    assert j["message_type"] == "get_requests_response"
-    print(j)
+    try:
+        await websocket.send(get_requests_event)
+        response = await websocket.recv()
+        print("Got response:", response)
+        j = json.loads(response)
+        assert j["message_type"] == "get_requests_response"
+        print(j)
+    finally:
+        await websocket.close()
 
 
 @pytest.mark.skip

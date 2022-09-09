@@ -77,6 +77,7 @@ def handler(event, context):
 
         logger.info("request_id: %s", request_id)
 
-        url = f"https://{bucket_name}.s3.{aws_region}.amazonaws.com/{key}"
-        logger.info("s3 url to save: %s", url)
+        # This url depends on a cloudfront / route 53 record to function
+        url = f"https://{bucket_name}/{key}"
+        logger.info("Url to save: %s", url)
         repository.set_s3_path_for_request(request_id, url)
