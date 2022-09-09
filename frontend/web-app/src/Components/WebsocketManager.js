@@ -138,7 +138,7 @@ function WebsocketManagerFactory() {
                     ...this.state,
                     busy: true,
                     requests: [...this.state.requests, obj],
-                    recent_requests: [...this.state.recent_requests, obj],
+                    recent_requests: [obj, ...this.state.recent_requests],
 
                 })
             }

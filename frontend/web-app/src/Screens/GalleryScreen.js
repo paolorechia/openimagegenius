@@ -25,7 +25,7 @@ export default function GalleryScreen(props) {
     if (window.screen) {
         maxWidth = window.screen.width - 600;
         width = Math.max(maxWidth, minWidth)
-        numberCols = Math.floor(width / default_size)    
+        numberCols = Math.floor(width / default_size)
     }
     console.log(default_size, width, numberCols)
 
@@ -39,7 +39,7 @@ export default function GalleryScreen(props) {
             }}
                 cols={numberCols}
                 rowHeight={default_size}>
-                {props.websockets.state.requests.map((item) => (
+                {props.websockets.state.requests.filter(item => item.s3_url.length > 0).map((item) => (
                     <ImageListItem key={item.request_id}>
                         <img
                             src={`${item.s3_url}`}
