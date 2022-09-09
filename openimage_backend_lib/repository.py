@@ -1,3 +1,4 @@
+from enum import unique
 from .date_helper import get_iso_and_timestamp_now
 from .database_models import Metadata, RequestModel, UserModel, APITokenModel, ConnectionModel
 from typing import Optional, List
@@ -333,3 +334,22 @@ class Repository:
                 ":utt": {"S": ts},
             }
         )
+
+    def query_user_requests(self, unique_user_id: str):
+        logger.info("Querying requests for user: %s", unique_user_id)
+
+        response = self.ddb.query(
+            TableName=self.environment.request_table_name,
+            IndexName=self.environment.request_unique_user_id_index,
+            KeyConditionExpression="requester_unique_user_id = :uui",
+            ExpressionAttributeValues={
+                ":uui": {"S": unique_user_id}
+            }
+        )
+
+        logger.info("Got back as response: %s",  response)
+        items = response.get("Items", [])
+        parsed_response = []
+        for item in items:
+            parsed_response.append(RequestModel(
+                **flatten_response(item)))

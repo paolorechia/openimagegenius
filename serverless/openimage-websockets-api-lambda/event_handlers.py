@@ -5,7 +5,6 @@ from default_handler import default_handler
 from disconnect_handler import disconnect_handler
 from request_handler import request_handler
 
-
 def connect(event, context):
     return connect_handler(event, context)
 

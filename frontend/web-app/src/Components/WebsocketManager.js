@@ -87,6 +87,13 @@ function WebsocketManagerFactory() {
             const obj = JSON.parse(event.data)
             console.log("Parsed", obj)
 
+            if (obj.message == "Internal Server Error") {
+                this.setNotifications(
+                    [{ "message_type": "internal_server_error", "data": "Server Error" }]
+                )
+                return
+            }
+
             if (obj.message_type === "authorization") {
                 if (obj.data === "unauthorized") {
                     this.setState({

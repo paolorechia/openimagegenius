@@ -58,4 +58,4 @@ class RequestModel(BaseModel):
     medium_thumbnail_s3_path: Optional[str] = ""
 
 
-REQUEST_TYPES = frozenset(["prompt"])
+REQUEST_TYPES = frozenset(["prompt", "get_requests"])
