@@ -1,3 +1,4 @@
+.vscode
 *_credentials.json
 **/node_modules/**
 **/manual_dist/**
