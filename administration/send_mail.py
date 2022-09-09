@@ -54,9 +54,9 @@ class WelcomeAlphaEmail(Email):
 
         Thank you for subscribing to the alpha version of the Open Image Genius platform. I'm really excited to have you onboard.
 
-        Today, I'm releasing the production environment under the link: http://app.openimagegenius.com)
+        Today, I'm releasing the production environment under the link: https://app.openimagegenius.com)
 
-        Please note that this is still alpha and highly unstable, but it should be a bit more stable than the development environment (http://dev.app.openimagegenius.com)
+        Please note that this is still alpha and highly unstable, but it should be a bit more stable than the development environment (https://dev.app.openimagegenius.com)
         
         If you received this e-mail, you should have access to both environments. Also please note that my GPU is not always turned on, in which case
         you will get a 'Job failed' error when trying to generate an image.
@@ -74,11 +74,38 @@ class WelcomeAlphaEmail(Email):
         """
         self.to_address = to_address
 
+class WelcomeCorrectionAlphaEmail(Email):
+    def __init__(self, ses_client, to_address) -> None:
+        super().__init__(ses_client)
+        self.subject = "Open Image Genius - Correct Link to the Platform"
+        self.email_html_body = """
+
+        """
+        self.email_text_body = """
+        Hi,
+
+        I'm terribly sorry, but the previous link was incorrect (it used http instead of https). If you tried and could not access, please try it with HTTPS instead, like this:
+
+        - https://app.openimagegenius.com
+        - https://auth.openimagegenius.com
+        - https://dev.auth.openimagegenius.com
+        - https://dev.app.openimagegenius.com
+        
+
+        Best regards,
+        """
+        self.to_address = to_address
+
 
 def main(args):
     email = None
     if args.email_type == "welcome-alpha":
         email = WelcomeAlphaEmail(
+            to_address=args.to_address,
+            ses_client=ses_client,
+        )
+    elif args.email_type == "welcome-alpha-correction":
+        email = WelcomeCorrectionAlphaEmail(
             to_address=args.to_address,
             ses_client=ses_client,
         )
