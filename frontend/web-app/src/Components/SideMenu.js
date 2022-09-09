@@ -9,6 +9,7 @@ import Divider from '@mui/material/Divider';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import { Box } from '@mui/system';
 import { IconButton } from '@mui/material';
+import ImageTwoToneIcon from '@mui/icons-material/ImageTwoTone'
 
 const drawerWidth = 240;
 
@@ -17,9 +18,9 @@ export default function SideMenu(props) {
         props.setScreenCallback("prompt")
     }
 
-    // function setImageDetailsScreen() {
-    //     props.setScreenCallback("image-details")
-    // }
+    function setGalleryScreen() {
+        props.setScreenCallback("gallery")
+    }
 
     return (
         <Drawer
@@ -59,17 +60,17 @@ export default function SideMenu(props) {
                         }
                     </ListItemButton>
                 </ListItem>
-                {/* <ListItem key="Image Details" disablePadding onClick={setImageDetailsScreen}>
+                <ListItem key="Gallery" disablePadding onClick={setGalleryScreen}>
                     <ListItemButton>
                         <ListItemIcon>
                             <ImageTwoToneIcon />
                         </ListItemIcon>
-                        {props.selectedScreen === "image-details"
-                            ? <ListItemText secondary="Image Details" />
-                            : <ListItemText primary="Image Details" />
+                        {props.selectedScreen === "gallery"
+                            ? <ListItemText secondary="Gallery" />
+                            : <ListItemText primary="Gallery" />
                         }
                     </ListItemButton>
-                </ListItem> */}
+                </ListItem>
             </List>
         </Drawer>
     )

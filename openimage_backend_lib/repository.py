@@ -353,3 +353,4 @@ class Repository:
         for item in items:
             parsed_response.append(RequestModel(
                 **flatten_response(item)))
+        return parsed_response

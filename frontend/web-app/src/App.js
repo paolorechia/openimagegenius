@@ -7,7 +7,7 @@ import { Alert, CircularProgress } from '@mui/material';
 import Header from './Components/Header';
 import SideMenu from './Components/SideMenu';
 import RequestsMenu from './Components/RequestsMenu';
-import ImageDetailScreen from './Screens/ImageDetailScreen';
+import GalleryScreen from './Screens/GalleryScreen';
 import PromptScreen from './Screens/PromptScreen';
 import WebsocketManager from './Components/WebsocketManager';
 import Unauthorized from './Components/Unauthorized';
@@ -21,6 +21,7 @@ function App() {
     "authorized": false,
     "busy": false,
     "requests": [],
+    "fetched_requests": []
   })
   const [notifications, setNotifications] = useState([])
   const [isDrawerOpen, setIsDrawerOpen] = useState(true)
@@ -95,7 +96,7 @@ function App() {
             : websockets.state.authorized ?
               selectedScreen === "prompt"
                 ? <PromptScreen websockets={websockets} />
-                : <ImageDetailScreen websockets={websockets} />
+                : <GalleryScreen websockets={websockets} />
               : <Unauthorized />
         }
         <RequestsMenu

@@ -34,6 +34,21 @@ function WebsocketManagerFactory() {
             )
         )
     }
+    this.send_get_requests = function () {
+        this.connection.send(
+            JSON.stringify(
+                {
+                    "action": "request",
+                    "request_type": "get_requests",
+                    "data": {
+                        "current_page": 0,
+                        "page_size": 20,
+                    }
+                }
+            )
+        )
+    }
+
     this.WebsocketConnection = function () {
         const ws_endpoints = {
             "dev": "wss://dev.ws-api.openimagegenius.com",
@@ -87,7 +102,7 @@ function WebsocketManagerFactory() {
             const obj = JSON.parse(event.data)
             console.log("Parsed", obj)
 
-            if (obj.message == "Internal Server Error") {
+            if (obj.message === "Internal Server Error") {
                 this.setNotifications(
                     [{ "message_type": "internal_server_error", "data": "Server Error" }]
                 )
@@ -110,6 +125,15 @@ function WebsocketManagerFactory() {
                     })
                 }
             }
+            if (obj.message_type === "get_requests_response") {
+                // this.setState({
+                //     ...this.state,
+                //     busy: true,
+                //     fetched_requests: [...this.state.fetched_requests, ...obj.]
+                // })
+                return // No need to notify
+            }
+
             if (obj.message_type === "request_accepted") {
                 this.setState({
                     ...this.state,
@@ -117,6 +141,7 @@ function WebsocketManagerFactory() {
                     requests: [...this.state.requests, obj]
                 })
             }
+
             if (obj.message_type === "job_complete" || obj.message_type === "job_failed") {
                 console.log("Got job update", obj.message_type)
                 let merged_requests = this.state.requests.map(request => {
@@ -126,7 +151,8 @@ function WebsocketManagerFactory() {
                             data: {
                                 ...request.data,
                                 ...obj.data
-                            }
+                            },
+                            busy: false,
                         }
                     }
                     return request
