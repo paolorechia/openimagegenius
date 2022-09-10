@@ -1,4 +1,3 @@
-import numpy as np
 import os
 
 LIB_DIR = os.environ["LIB_DIR"]
@@ -7,15 +6,7 @@ MODELS_DIR = os.environ["MODELS_DIR"]
 print("Using lib dir", LIB_DIR)
 print("Using models dir", MODELS_DIR)
 
-try:
-    import sys
-    import os
-    sys.path.append(LIB_DIR)  # nopep8 # noqa
-except ImportError:
-    pass
-
 # Let's see if the import works :)
-
 
 def handler(event, context):
     lib_files = os.listdir(LIB_DIR)
@@ -24,9 +15,10 @@ def handler(event, context):
     model_files = os.listdir(MODELS_DIR)
     print("Found these files", model_files)
 
+    import sys
+    sys.path.append(LIB_DIR)  # nopep8 # noqa
 
     print("Trying to import libraries")
-    import os
     # engine
     from stable_diffusion_engine import StableDiffusionEngine
     # scheduler

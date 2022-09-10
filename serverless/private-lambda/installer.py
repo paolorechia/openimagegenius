@@ -28,12 +28,20 @@ def install_models(models_dir):
             Bucket=os.environ["INSTALLER_BUCKET_NAME"],
             Key=model
         )
-        print("Reading byte stream into memory")
-        file_buffer = BytesIO(response["Body"].read())
+        # Overflow on big files:
+        # Fix from: https://stackoverflow.com/a/70909130/8628527
+        buf = bytearray(response['ContentLength'])
+        view = memoryview(buf)
+        pos = 0
+        while True:
+            chunk = response['Body'].read(67108864)
+            if len(chunk) == 0:
+                break
+        view[pos:pos+len(chunk)] = chunk
         filename = os.path.join(models_dir, model)
         print(f"Writing buffer to file {filename}")
         with open(filename, "wb") as fp:
-            fp.write(file_buffer.getbuffer())
+            fp.write(buf)
 
 
 def install_libraries(lib_dir):
@@ -56,16 +64,23 @@ def install_libraries(lib_dir):
 
     print("Trying to unzip zip file")
     zip_file = ZipFile(zip_raw_buffer)
-    print(zip_file)
-    print("Zip has the following files")
     files = zip_file.namelist()
+    print("Zip has the following files")
     print(files)
     for file_ in files:
         file_bytes = zip_file.read(file_)
         output_filename = os.path.join(lib_dir, file_)
         print(f"Writing file {file_} to {output_filename}")
-        with open(output_filename, "wb") as fp:
-            fp.write(file_bytes)
+        base_path = "/".join(output_filename.split("/")[0:-1])
+        try:
+            os.makedirs(base_path)
+        except FileExistsError:
+            pass
+        try:
+            with open(output_filename, "w+b") as fp:
+                fp.write(file_bytes)
+        except IsADirectoryError:
+            pass
 
     lib_files = os.listdir(lib_dir)
     print("List of files in lib directory after extracting and writing zip archive to disk:", lib_files)
@@ -83,5 +98,5 @@ def handler(event, context):
     files = os.listdir(mount_dir)
     print("List of files in directory", files)
 
-    install_libraries(lib_dir)
+    # install_libraries(lib_dir)
     install_models(models_dir)
