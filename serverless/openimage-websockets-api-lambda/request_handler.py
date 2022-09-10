@@ -67,10 +67,6 @@ def request_handler(event, context):
 
     rate_limiter = get_limiter()
 
-    # Rate limit on connection id (in case someone unauthorized)
-    if not rate_limiter.should_allow(connection_id):
-        return build_rate_limited_response()
-
     connection: Optional[models.ConnectionModel] = repository.get_connection_by_id(
         connection_id)
 
