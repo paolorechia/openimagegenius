@@ -25,6 +25,7 @@ custom:
   # request table
   requestTableName: request-table-name-${self:provider.stage}
   requestUniqueUserIdIndex: request-unique-user-id-index-${self:provider.stage}
+  requestStatusIndex: request-status-index-${self:provider.stage}
 
   # GPU user table
   APITokenTable: api-token-table-${self:provider.stage}
@@ -76,6 +77,8 @@ resources:
             AttributeType: S
           - AttributeName: requester_unique_user_id
             AttributeType: S
+          - AttributeName: request_status
+            AttributeType: S
         KeySchema:
           - AttributeName: request_id
             KeyType: HASH
@@ -83,6 +86,12 @@ resources:
           - IndexName: ${self:custom.requestUniqueUserIdIndex}
             KeySchema:
               - AttributeName: requester_unique_user_id
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+          - IndexName: ${self:custom.requestStatusIndex}
+            KeySchema:
+              - AttributeName: request_status
                 KeyType: HASH
             Projection:
               ProjectionType: ALL

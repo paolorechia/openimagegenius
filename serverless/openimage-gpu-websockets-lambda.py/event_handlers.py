@@ -18,8 +18,11 @@ telegram_client = telegram.get_telegram(requests.Session())
 
 dynamodb_client = boto3.client("dynamodb")
 api_client = boto3.client('apigatewaymanagementapi')
+lambda_client = boto3.client("lambda")
 
 repository = repo_module.Repository(dynamodb_client, environment)
+
+retrying_lambda_name = os.environ["RETRYING_LAMBDA_NAME"]
 
 
 def connection(event, context):
@@ -58,6 +61,11 @@ def connection(event, context):
     repository.set_connection_id_for_token(api_token, connection_id)
     repository.set_status_for_token(api_token, "connecting")
     telegram_client.send_message(f"GPU node {api_token[0:5]}** is connecting")
+    lambda_client.invoke(
+        FunctionName=retrying_lambda_name,
+        InvocationType="Event",
+        LogType="None"
+    )
     return {"statusCode": 200, "body": "Connected"}
 
 
@@ -86,3 +94,18 @@ def status(event, context):
     telegram_client.send_message(
         f"GPU node {api_token[0:5]}** changed to status {status_}")
     return {"statusCode": 200, "body": "Status Acknowledged."}
+
+
+def retrying(event, context):
+    logger.info("Event: %s", event)
+    # TODO: query DDB
+    # TODO: push to SQS
+    # sqs_client.send_message(
+    #     QueueUrl=queue_url,
+    #     MessageBody=json.dumps({
+    #         "request_type": request.request_type,
+    #         "data": request.data,
+    #         "unique_request_id": request_id,
+    #         "requester_unique_user_id": request.unique_user_id,
+    #     }),
+    # )

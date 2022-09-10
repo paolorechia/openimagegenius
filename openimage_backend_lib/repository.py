@@ -20,6 +20,7 @@ class EnvironmentInfo:
         self.google_user_id_index_name = os.environ["GOOGLE_USER_ID_INDEX_NAME"]
         self.user_google_email_index_name = os.environ["USER_GOOGLE_EMAIL_INDEX_NAME"]
         self.request_unique_user_id_index = os.environ["REQUEST_UNIQUE_USER_ID_INDEX"]
+        self.request_status_index = os.environ["REQUEST_STATUS_INDEX"]
         self.api_token_unique_user_id_index = os.environ["API_TOKEN_UNIQUE_USER_ID_INDEX"]
         self.connection_unique_user_id_index = os.environ["CONNECTION_UNIQUE_USER_ID_INDEX"]
         self.connection_ip_address_index = os.environ["CONNECTION_IP_ADRESS_INDEX"]
