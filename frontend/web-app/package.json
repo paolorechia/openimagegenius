@@ -18,8 +18,8 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "build:development": "REACT_APP_ENV=dev npm run build; mv build build-dev",
-    "build:production": "REACT_APP_ENV=prod npm run build; mv build build-prod",
+    "build:development": "rm -r build-dev; REACT_APP_ENV=dev npm run build; mv build build-dev",
+    "build:production": "rm -r build-prod; REACT_APP_ENV=prod npm run build; mv build build-prod",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
