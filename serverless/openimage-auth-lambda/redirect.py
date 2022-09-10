@@ -1,3 +1,4 @@
+from distutils.command.build import build
 import logging
 import os
 import urllib.parse as parser
@@ -14,6 +15,8 @@ from google.oauth2 import id_token
 from openimage_backend_lib import database_models as models
 from openimage_backend_lib import repository as repo_module
 from openimage_backend_lib import telegram
+from openimage_backend_lib.rate_limiter import get_limiter
+from openimage_backend_lib.request_helper import build_rate_limited_response
 
 dynamodb_client = boto3.client("dynamodb")
 environment = repo_module.EnvironmentInfo()
@@ -63,9 +66,20 @@ html_failure_page = """
 </html>
 """
 
-
 def handler(event, context):
     logger.info("Event: %s", event)
+    ip_address = event \
+        .get("requestContext", {}) \
+        .get("identity", {}) \
+        .get("sourceIp")
+    logger.info("IP Address: %s", ip_address)
+    if not ip_address:
+        logger.warn("IP Address not found!")
+        return build_rate_limited_response()
+    rate_limiter = get_limiter()
+    if not rate_limiter.should_allow(ip_address):
+        return build_rate_limited_response()
+
     try:
         body = event["body"]
         logger.info("Body: %s",  body)
