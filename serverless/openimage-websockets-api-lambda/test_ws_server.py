@@ -36,7 +36,7 @@ async def authorized_connection():
     assert response == '{"message_type": "authorization", "data": "authorized"}'
     return websocket
 
-
+@pytest.mark.regression
 @pytest.mark.asyncio
 async def test_request_rejected():
     async with websockets.connect(test_endpoint) as websocket:
@@ -45,7 +45,7 @@ async def test_request_rejected():
         print("Got response:", response)
         assert response == '{"message_type": "error", "data": "You\'re not authorized. Please send your valid token first."}'
 
-
+@pytest.mark.regression
 @pytest.mark.asyncio
 async def test_authorized_request():
     websocket = await authorized_connection()
@@ -59,6 +59,7 @@ async def test_authorized_request():
         await websocket.close()
 
 
+@pytest.mark.regression
 @pytest.mark.asyncio
 async def test_get_requests():
     websocket = await authorized_connection()
@@ -73,7 +74,49 @@ async def test_get_requests():
         await websocket.close()
 
 
-@pytest.mark.skip
+@pytest.mark.rate_limit_connect
+@pytest.mark.asyncio
+async def test_rate_limit_on_connect():
+    limit = 30
+    for i in range(limit + 1):
+        try:
+            print("Attempt ", i)
+            websocket = await websockets.connect(test_endpoint)
+        finally:
+            websocket.close()
+        
+
+@pytest.mark.rate_limit_authorize
+@pytest.mark.asyncio
+async def test_rate_limit_on_authorize():
+    try:
+        websocket = await websockets.connect(test_endpoint)
+        limit = 30
+        for i in range(limit + 1):
+                print("Attempt ", i)
+                await websocket.send(authorization_event)
+                response = await websocket.recv()
+                assert response == '{"message_type": "authorization", "data": "authorized"}'
+    finally:
+        websocket.close()
+
+@pytest.mark.rate_limit_request
+@pytest.mark.asyncio
+async def test_rate_limit_on_request():
+    try:
+        websocket = await authorized_connection()
+        limit = 30
+        for i in range(limit + 1):
+                print("Attempt ", i)
+                await websocket.send(request_event)
+                response = await websocket.recv()
+                print("Got response:", response)
+                j = json.loads(response)
+                assert j["message_type"] == "request_accepted"
+    finally:
+        websocket.close()
+
+@pytest.mark.stress_test
 @pytest.mark.asyncio
 async def test_stress_test_jobs():
     async with websockets.connect(test_endpoint) as websocket:
