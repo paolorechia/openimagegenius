@@ -1,5 +1,10 @@
 import os
+import logging
 from requests import Session
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
 
 class RedisEnvironmentInfo:
     def __init__(self) -> None:
@@ -18,9 +23,10 @@ class RedisUpstashRestAPIClient:
         }
         self.return_type = return_type
 
-    def _call_api(self, url, method="get"):
+    def _call_api(self, url, url_tail, method="get"):
+        logger.info("Calling %s", url_tail)
         api = getattr(self.session, method)
-        response = api(url)
+        response = api(f"{url}/{url_tail}")
         response.raise_for_status()
         r = response.json()["result"]
         if r is None:
@@ -29,30 +35,22 @@ class RedisUpstashRestAPIClient:
             return 0
         return self.return_type(r)
 
-
     def del_(self, key):
-        return self._call_api(
-            f"{self.env.api_url}/del/{self.env.prefix}-{key}"
-        )
+        url_tail = f"del/{self.env.prefix}-{key}"
+        return self._call_api(self.env.api_url, url_tail)
 
     def set(self, key, value):
-        return self._call_api(
-            f"{self.env.api_url}/set/{self.env.prefix}-{key}/{value}"
-        )
+        url_tail = f"set/{self.env.prefix}-{key}/{value}"
+        return self._call_api(self.env.api_url, url_tail)
 
     def incr(self, key):
-        return self._call_api(
-            f"{self.env.api_url}/incr/{self.env.prefix}-{key}"
-        )
+        url_tail = f"incr/{self.env.prefix}-{key}"
+        return self._call_api(self.env.api_url, url_tail)
 
     def expire(self, key, ttl_seconds):
-        return self._call_api(
-            f"{self.env.api_url}/expire/{self.env.prefix}-{key}/{ttl_seconds}")
+        url_tail = f"expire/{self.env.prefix}-{key}/{ttl_seconds}"
+        return self._call_api(self.env.api_url, url_tail)
 
     def get(self, key):
-        return self._call_api(
-            f"{self.env.api_url}/get/{self.env.prefix}-{key}")
-
-    
-
-        
+        url_tail = f"get/{self.env.prefix}-{key}"
+        return self._call_api(self.env.api_url, url_tail)

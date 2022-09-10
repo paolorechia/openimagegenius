@@ -6,10 +6,12 @@ def build_error_message_body(error):
         "data": error
     })
 
-
 def build_rate_limited_response():
     return json.dumps({
         "statusCode": 429,
-        "body": '{"message": "Too many requests. Try again soon."}',
+        "body": {
+            "message_type": "rate-limit",
+            "data": "Too many requests. Try again soon."
+            },
         }
     )

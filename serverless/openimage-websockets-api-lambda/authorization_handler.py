@@ -7,6 +7,9 @@ import pydash as _
 from openimage_backend_lib import authorizer
 from openimage_backend_lib import database_models as models
 from openimage_backend_lib import repository as repo_module
+from openimage_backend_lib.request_helper import build_rate_limited_response
+from openimage_backend_lib.rate_limiter import get_limiter
+
 import time
 
 dynamodb_client = boto3.client("dynamodb")
@@ -23,6 +26,12 @@ def authorization_handler(event, context):
     connection_id = _.get(event, "requestContext.connectionId")
     logger.info("Connection ID: %s", connection_id)
     logger.info("Invoking authorizer from library")
+
+    rate_limiter = get_limiter()
+
+    if not rate_limiter.should_allow(connection_id):
+        return build_rate_limited_response()
+
     policy = authorizer.handler(event, context)
     logger.info("Policy: %s", policy)
     unique_user_id = _.get(policy, "context.unique_user_id")

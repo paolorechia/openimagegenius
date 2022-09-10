@@ -10,6 +10,8 @@ from openimage_backend_lib import database_models as models
 from openimage_backend_lib import repository as repo_module
 from openimage_backend_lib import request_models
 from openimage_backend_lib.request_helper import build_error_message_body
+from openimage_backend_lib.request_helper import build_rate_limited_response
+from openimage_backend_lib.rate_limiter import get_limiter
 
 from pydantic import ValidationError
 from prompt_handler import prompt_request_handler
@@ -62,6 +64,11 @@ def request_handler(event, context):
         return {"statusCode": 400, "body": build_error_message_body("mal-formed JSON")}
 
     connection_id = _.get(event, "requestContext.connectionId")
+
+    rate_limiter = get_limiter()
+
+    if not rate_limiter.should_allow(connection_id):
+        return build_rate_limited_response()
 
     connection: Optional[models.ConnectionModel] = repository.get_connection_by_id(
         connection_id)

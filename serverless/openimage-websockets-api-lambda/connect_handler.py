@@ -6,6 +6,8 @@ import pydash as _
 
 from openimage_backend_lib import database_models as models
 from openimage_backend_lib import repository as repo_module
+from openimage_backend_lib.rate_limiter import get_limiter
+from openimage_backend_lib.request_helper import build_rate_limited_response
 
 dynamodb_client = boto3.client("dynamodb")
 environment = repo_module.EnvironmentInfo()
@@ -67,6 +69,15 @@ def connect_handler(event, context):
     logger.info("Event: %s", event)
     connection_id = _.get(event, "requestContext.connectionId")
     ip_address = _.get(event, "requestContext.identity.sourceIp")
+
+    if not ip_address:
+        logger.warn("IP Address not found!")
+        return build_rate_limited_response()
+    rate_limiter = get_limiter()
+
+    if not rate_limiter.should_allow(ip_address):
+        return build_rate_limited_response()
+
     repository.add_connection(connection_id, ip_address)
     logger.info("Connection request received.")
     return {"statusCode": 200, "body": "You're connected, but not authorized."}
