@@ -9,7 +9,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "serverless": "^3.22.0",
+    "serverless": "^3.22.0"
+  },
+  "devDependencies": {
     "serverless-s3-sync": "^3.0.0"
   }
 }
