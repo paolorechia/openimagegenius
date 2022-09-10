@@ -43,6 +43,13 @@ provider:
     # Telegram
     TELEGRAM_TOKEN: ${ssm:/${self:provider.stage}/telegram/token}
     TELEGRAM_CHAT_ID: ${ssm:/${self:provider.stage}/telegram/chat_id}
+    
+    # REDIS
+    REDIS_URL: ${ssm:/${self:provider.stage}/redis/url}
+    REDIS_TOKEN: ${ssm:/${self:provider.stage}/redis/token}
+    REDIS_LIMIT: 20
+    REDIS_PERIOD: 60
+
     # Others
     SQS_REQUEST_URL: ${self:custom.imageProcessingQueueUrl}
     AUTHORIZER_STAGE: ${self:provider.stage}
@@ -51,6 +58,8 @@ provider:
 
     DEVELOPER_GOOGLE_USER_ID: ${ssm:/dev/develop-google-user-id} # Only exists in dev stage
     WS_SECRET_PASS: ${ssm:/dev/websockets-api/admin-creds} # Only exists in dev stage
+
+
 
   iam:
     role:

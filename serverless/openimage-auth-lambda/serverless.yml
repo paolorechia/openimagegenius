@@ -54,6 +54,12 @@ provider:
     TELEGRAM_TOKEN: ${ssm:/${self:provider.stage}/telegram/token}
     TELEGRAM_CHAT_ID: ${ssm:/${self:provider.stage}/telegram/chat_id}
 
+    # REDIS
+    REDIS_URL: ${ssm:/${self:provider.stage}/redis/url}
+    REDIS_TOKEN: ${ssm:/${self:provider.stage}/redis/token}
+    REDIS_LIMIT: 5
+    REDIS_PERIOD: 60
+
 functions:
   redirect:
     handler: redirect.handler
