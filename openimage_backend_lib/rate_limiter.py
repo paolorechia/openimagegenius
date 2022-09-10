@@ -1,5 +1,11 @@
-from openimage_backend_lib.upstash_redis_client import RedisUpstashRestAPIClient
 import os
+
+from requests import Session
+
+from openimage_backend_lib.upstash_redis_client import (
+    RedisEnvironmentInfo, RedisUpstashRestAPIClient
+)
+
 
 class RateLimiter:
     def __init__(self, redis: RedisUpstashRestAPIClient, number_of_requests_limit: int, reset_period_in_seconds: int):
@@ -14,18 +20,25 @@ class RateLimiter:
             self.redis.expire(key, self.period)
             return True
         if current_requests <= self.limit:
+            self.redis.incr(key)
             return True
         return False
 
+
 limiter = None
+
+
 def get_limiter():
+    global limiter
     if limiter:
         return limiter
-
-    limit = os.environ["REDIS_LIMIT"]
-    period = os.environ["REDIS_PERIOD"]
+    redis_env = RedisEnvironmentInfo()
+    limit = int(os.environ["REDIS_LIMIT"])
+    period = int(os.environ["REDIS_PERIOD"])
+    redis_http_session = Session()
     limiter = RateLimiter(
-        redis=RedisUpstashRestAPIClient(),
+        redis=RedisUpstashRestAPIClient(
+            environment=redis_env, http_session=redis_http_session),
         number_of_requests_limit=limit,
         reset_period_in_seconds=period
     )

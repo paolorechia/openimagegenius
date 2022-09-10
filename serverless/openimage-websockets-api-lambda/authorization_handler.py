@@ -30,6 +30,7 @@ def authorization_handler(event, context):
     rate_limiter = get_limiter()
 
     if not rate_limiter.should_allow(connection_id):
+        logger.info("Rate limited, returning 429")
         return build_rate_limited_response()
 
     policy = authorizer.handler(event, context)

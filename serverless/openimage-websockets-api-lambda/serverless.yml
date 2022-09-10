@@ -47,6 +47,8 @@ provider:
     # REDIS
     REDIS_URL: ${ssm:/${self:provider.stage}/redis/url}
     REDIS_TOKEN: ${ssm:/${self:provider.stage}/redis/token}
+    REDIS_PREFIX: ${ssm:/${self:provider.stage}/redis/prefix}
+
     REDIS_LIMIT: 20
     REDIS_PERIOD: 60
 
@@ -94,6 +96,9 @@ functions:
           route: $connect
     layers:
       - Ref: PythonRequirementsLambdaLayer
+    environment:
+      REDIS_LIMIT: 10
+      REDIS_PERIOD: 300
 
   disconnectHandler:
     handler: event_handlers.disconnect
@@ -111,7 +116,10 @@ functions:
           routeResponseSelectionExpression: $default
     layers:
       - Ref: PythonRequirementsLambdaLayer
-
+    environment:
+      REDIS_LIMIT: 10
+      REDIS_PERIOD: 300
+    
   defaultHandler:
     handler: event_handlers.default
     events:
@@ -127,6 +135,10 @@ functions:
       - websocket:
           route: request
           routeResponseSelectionExpression: $default
+    environment:
+        REDIS_LIMIT: 5
+        REDIS_PERIOD: 60
+
 
   databaseUpdateHandler:
     handler: event_handlers.update

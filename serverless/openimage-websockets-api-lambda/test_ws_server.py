@@ -1,5 +1,6 @@
 import asyncio
 import websockets
+from websockets.exceptions import InvalidStatusCode
 import json
 import pytest
 import functools
@@ -77,26 +78,33 @@ async def test_get_requests():
 @pytest.mark.rate_limit_connect
 @pytest.mark.asyncio
 async def test_rate_limit_on_connect():
-    limit = 30
-    for i in range(limit + 1):
-        try:
-            print("Attempt ", i)
-            websocket = await websockets.connect(test_endpoint)
-        finally:
-            websocket.close()
-        
+    test_limit = 10
+    attempt = 0
+    with pytest.raises(InvalidStatusCode):
+        while attempt < test_limit:
+            try:
+                print("Attempt ", attempt)
+                websocket = await websockets.connect(test_endpoint)
+            finally:
+                websocket.close()
+            attempt +=1
+    assert attempt == 6
 
 @pytest.mark.rate_limit_authorize
 @pytest.mark.asyncio
 async def test_rate_limit_on_authorize():
+    websocket = await websockets.connect(test_endpoint)
     try:
-        websocket = await websockets.connect(test_endpoint)
         limit = 30
+        throttled_at = 11
         for i in range(limit + 1):
                 print("Attempt ", i)
                 await websocket.send(authorization_event)
                 response = await websocket.recv()
-                assert response == '{"message_type": "authorization", "data": "authorized"}'
+                if i < throttled_at:
+                    assert response == '{"message_type": "authorization", "data": "authorized"}'
+                else:
+                    assert response == '{"message_type": "rate_limit", "data": "Too many requests. Try again soon."}'
     finally:
         websocket.close()
 
@@ -105,14 +113,18 @@ async def test_rate_limit_on_authorize():
 async def test_rate_limit_on_request():
     try:
         websocket = await authorized_connection()
-        limit = 30
-        for i in range(limit + 1):
+        limit = 10
+        throttled_at = 6
+        for i in range(1, limit + 1):
                 print("Attempt ", i)
                 await websocket.send(request_event)
                 response = await websocket.recv()
                 print("Got response:", response)
                 j = json.loads(response)
-                assert j["message_type"] == "request_accepted"
+                if i < throttled_at:
+                    assert j["message_type"] == "request_accepted"
+                else:
+                    assert j["message_type"] == "rate_limit"
     finally:
         websocket.close()
 

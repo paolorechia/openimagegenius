@@ -17,6 +17,7 @@ from openimage_backend_lib import repository as repo_module
 from openimage_backend_lib import telegram
 from openimage_backend_lib.rate_limiter import get_limiter
 from openimage_backend_lib.request_helper import build_rate_limited_response
+from openimage_backend_lib.upstash_redis_client import RedisEnvironmentInfo
 
 dynamodb_client = boto3.client("dynamodb")
 environment = repo_module.EnvironmentInfo()

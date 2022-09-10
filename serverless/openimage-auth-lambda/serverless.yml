@@ -57,6 +57,7 @@ provider:
     # REDIS
     REDIS_URL: ${ssm:/${self:provider.stage}/redis/url}
     REDIS_TOKEN: ${ssm:/${self:provider.stage}/redis/token}
+    REDIS_PREFIX: ${ssm:/${self:provider.stage}/redis/prefix}
     REDIS_LIMIT: 5
     REDIS_PERIOD: 60
 

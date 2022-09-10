@@ -15,7 +15,7 @@ class RedisEnvironmentInfo:
 
 
 class RedisUpstashRestAPIClient:
-    def __init__(self, environment: RedisEnvironmentInfo, http_session: Session, return_type = int) -> None:
+    def __init__(self, environment: RedisEnvironmentInfo, http_session: Session, return_type=int) -> None:
         self.env = environment
         self.session = http_session
         self.session.headers = {
@@ -27,6 +27,8 @@ class RedisUpstashRestAPIClient:
         logger.info("Calling %s", url_tail)
         api = getattr(self.session, method)
         response = api(f"{url}/{url_tail}")
+        logger.info("content %s", str(response.content))
+
         response.raise_for_status()
         r = response.json()["result"]
         if r is None:

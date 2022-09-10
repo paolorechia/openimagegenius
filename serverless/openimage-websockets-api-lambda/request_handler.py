@@ -67,6 +67,7 @@ def request_handler(event, context):
 
     rate_limiter = get_limiter()
 
+    # Rate limit on connection id (in case someone unauthorized)
     if not rate_limiter.should_allow(connection_id):
         return build_rate_limited_response()
 
@@ -75,6 +76,11 @@ def request_handler(event, context):
 
     if not connection or connection.authorized != "authorized":
         return {"statusCode": 401, "body": build_error_message_body("You're not authorized. Please send your valid token first.")}
+
+    # Rate limit on connection
+    if not rate_limiter.should_allow(connection.unique_user_id):
+        return build_rate_limited_response()
+
     request_type = _.get(json_body, "request_type")
 
     logger.info("Request type: %s", request_type)
