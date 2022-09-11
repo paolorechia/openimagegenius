@@ -93,8 +93,8 @@ async def main():
                     else:
                         await ws_client.send_job_failed(request_id)
                         error_count += 1
-                    logger.info("Sending ready state...")
-                    await ws_client.send_ready_state(vram=dev_config.user_config.vram)
+                    # logger.info("Sending ready state...")
+                    # await ws_client.send_ready_state(vram=dev_config.user_config.vram)
             except (websockets.exceptions.ConnectionClosedError, asyncio.exceptions.IncompleteReadError) as excp:
                 print(excp)
                 logger.info("Connection dropped? Reconnecting...")
