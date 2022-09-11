@@ -96,6 +96,34 @@ class WelcomeCorrectionAlphaEmail(Email):
         """
         self.to_address = to_address
 
+class OpenAlphaEmail(Email):
+    def __init__(self, ses_client, to_address) -> None:
+        super().__init__(ses_client)
+        self.subject = "Moving to Open Alpha - Open Image Genius"
+        self.email_html_body = """
+
+        """
+        self.email_text_body = """
+        Hi, 
+        
+        While the current version is still rudimentary, here are some updates:
+
+        1. I've opened the signup for any user (user limit may still apply), as I was not getting enough traffic on the app. Anyone can signup at https://auth.openimagegenius.com/
+        2. Launched a "production" environment: https://app.openimagegenius.com/
+        3. Rate limits now apply. Users may issue 5 requests / minute. No hard limit on number of images (at least not yet).
+        4. Gallery feature to see your created images.
+        5. Rescheduling of failed events when a GPU node connects. If you had some failed jobs, you may want to signin and check if your image is there.
+        6. The GPU node may now share GPU memory between "dev" and production environments. In the past, running two nodes simultaneously triggered out of memory problems. 
+        7. Created a telegram channel where a bot posts events about GPU / users connecting/disconnecting: https://t.me/openimagegenius
+        8. Created a discord server in case people want to reach me out there: https://discord.gg/xZfaSu3akc
+        9. You can read about the upcoming features in https://pacific-drip-6f9.notion.site/The-Fourth-Iteration-So-many-features-cff9e66392f340688447e164b6315e89 - I'm more than happy to receive requests / feedback on what's more important for you.
+
+        Best regards,
+        Paolo Rechia
+        """
+        self.to_address = to_address
+
+
 
 def main(args):
     email = None
@@ -106,6 +134,11 @@ def main(args):
         )
     elif args.email_type == "welcome-alpha-correction":
         email = WelcomeCorrectionAlphaEmail(
+            to_address=args.to_address,
+            ses_client=ses_client,
+        )
+    elif args.email_type == "open-alpha":
+        email = OpenAlphaEmail(
             to_address=args.to_address,
             ses_client=ses_client,
         )
