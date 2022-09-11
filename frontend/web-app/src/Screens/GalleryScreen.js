@@ -43,7 +43,7 @@ export default function GalleryScreen(props) {
                 cols={numberCols}
                 rowHeight={default_size}>
                 {props.websockets.state.requests.map((item) => (
-                    <ImageListItem key={item.request_id}>
+                    <ImageListItem onClick={() => props.setCurrentImage(item)} key={item.request_id}>
                         <img
                             src={`${item.s3_url}`}
                             srcSet={`${item.s3_url}`}

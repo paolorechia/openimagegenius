@@ -21,11 +21,15 @@ function App() {
     "requests": [],
     "recent_requests": [],
     "last_evaluated_key": null,
+    "current_image": null,
   })
   const [notifications, setNotifications] = useState([])
   const [isDrawerOpen, setIsDrawerOpen] = useState(true)
   const [isRequestsDrawerOpen, setIsRequestsDrawerOpen] = useState(true)
 
+  function setCurrentImage(image) {
+    setWebsocketState({ ...websocketState, current_image: image })
+  }
   const websockets = {
     manager: WebsocketManager,
     state: websocketState,
@@ -85,12 +89,16 @@ function App() {
             : websockets.state.authorized ?
               <div>
                 <PromptScreen websockets={websockets} />
-                <GalleryScreen websockets={websockets} />
+                <GalleryScreen 
+                  setCurrentImage={setCurrentImage}
+                  websockets={websockets}
+                />
               </div>
               : <Unauthorized />
         }
         <RequestsMenu
           websockets={websockets}
+          setCurrentImage={setCurrentImage}
           isRequestsDrawerOpen={isRequestsDrawerOpen}
           handleRequestDrawerClose={handleRequestDrawerClose}
         />

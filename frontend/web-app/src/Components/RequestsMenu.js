@@ -54,7 +54,7 @@ export default function RequestsMenu(props) {
                 {
                     props.websockets.state.recent_requests.map(request => {
                         return (
-                            <Collapse key={request.data.request_id} in={true} timeout="auto" unmountOnExit>
+                            <Collapse onClick={() => props.setCurrentImage(request.data)} key={request.data.request_id} in={true} timeout="auto" unmountOnExit>
                                 <List component="div" disablePadding>
                                     <ListItem key={request.data.request_id} disablePadding>
                                         <ListItemButton>

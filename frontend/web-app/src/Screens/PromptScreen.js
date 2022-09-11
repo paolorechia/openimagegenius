@@ -8,7 +8,6 @@ import { CircularProgress } from '@mui/material';
 
 
 export default function PromptScreen(props) {
-
     const [prompt, setPrompt] = useState("")
     const jobs_completed = props.websockets.state.requests.filter(req => req.message_type === "job_complete")
     let last_completed_job = null;
@@ -16,6 +15,7 @@ export default function PromptScreen(props) {
         last_completed_job = jobs_completed[jobs_completed.length - 1]
         console.log(last_completed_job)
     }
+    const image = props.websockets.state.current_image
 
     function submitPrompt() {
         if (!prompt) {
@@ -44,7 +44,6 @@ export default function PromptScreen(props) {
                     }
                 } />
             {props.websockets.state.busy
-
                 ? <CircularProgress sx={{ "marginTop": "50px", "marginLeft": "50px" }} />
                 : <Button
                     onClick={submitPrompt}
@@ -61,8 +60,8 @@ export default function PromptScreen(props) {
                 </Button>
             }
             <Box sx={{ padding: "50px" }}>
-                {last_completed_job !== null
-                    ? <img src={last_completed_job.data.s3_url} width="500px" height="500px" alt={last_completed_job.data.prompt} />
+                {image !== null
+                    ? <img src={image.s3_url} width="500px" height="500px" alt={image.prompt} />
                     : ""
                 }
             </Box>

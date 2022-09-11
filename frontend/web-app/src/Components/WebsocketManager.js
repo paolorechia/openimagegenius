@@ -172,19 +172,6 @@ function WebsocketManagerFactory() {
 
             if (obj.message_type === "job_complete" || obj.message_type === "job_failed") {
                 console.log("Got job update", obj.message_type)
-                let merged_requests = this.state.requests.map(request => {
-                    if (request.data.request_id === obj.data.request_id) {
-                        return {
-                            message_type: obj.message_type,
-                            data: {
-                                ...request.data,
-                                ...obj.data
-                            },
-                            busy: false,
-                        }
-                    }
-                    return request
-                })
                 let merged_recent_requests = this.state.recent_requests.map(request => {
                     if (request.data.request_id === obj.data.request_id) {
                         return {
@@ -198,10 +185,18 @@ function WebsocketManagerFactory() {
                     }
                     return request
                 })
+                let newState = {
+                    recent_requests: merged_recent_requests,
+                    busy: false
+                }
+
+                if (obj.message_type === "job_complete") {
+                    newState.current_image = obj.data
+                }
+
                 this.setState({
                     ...this.state,
-                    requests: merged_requests,
-                    recent_requests: merged_recent_requests
+                    ...newState
                 })
             }
             this.setNotifications([obj])
