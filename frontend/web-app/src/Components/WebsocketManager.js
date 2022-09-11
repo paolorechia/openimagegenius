@@ -1,6 +1,29 @@
 let WebsocketManager = new WebsocketManagerFactory()
 export default WebsocketManager;
 
+function mergeRequests(stateRequests, incomingRequests) {
+    let by_request_ids = {}
+    for (let i = 0; i < stateRequests.length; i++) {
+        by_request_ids[stateRequests[i].request_id] = stateRequests[i]
+    }
+    for (let j = 0; j < incomingRequests.length; j++) {
+        let request = incomingRequests[j]
+        if (!by_request_ids[request.request_id]) {
+            by_request_ids[request.request_id] = request
+        } else {
+            by_request_ids[request.request_id] = {
+                ...by_request_ids[request.request_id],
+                ...request
+            }
+        }
+    }
+    let merged_requests = []
+    Object.keys(by_request_ids).forEach(key => {
+        merged_requests.push(by_request_ids[key])
+    })
+    return merged_requests
+}
+
 function WebsocketManagerFactory() {
     this.connection = null;
     this.state = null;
@@ -35,13 +58,14 @@ function WebsocketManagerFactory() {
         )
     }
     this.send_get_requests = function () {
+        const last_evaluated_key = this.state.last_evaluated_key
         this.connection.send(
             JSON.stringify(
                 {
                     "action": "request",
                     "request_type": "get_requests",
                     "data": {
-                        "current_page": 0,
+                        "last_evaluated_key": last_evaluated_key,
                         "page_size": 20,
                     }
                 }
@@ -125,10 +149,13 @@ function WebsocketManagerFactory() {
                     })
                 }
             }
+
             if (obj.message_type === "get_requests_response") {
+                const newStateRequests = mergeRequests(this.state.requests, obj.data.requests)
                 this.setState({
                     ...this.state,
-                    requests: obj.data.requests
+                    requests: newStateRequests,
+                    last_evaluated_key: obj.pagination.last_evaluated_key
                 })
                 return // No need to notify
             }
@@ -180,6 +207,7 @@ function WebsocketManagerFactory() {
             this.setNotifications([obj])
 
         })
+
         websocket.addEventListener('open', () => {
             websocket.send(
                 JSON.stringify(

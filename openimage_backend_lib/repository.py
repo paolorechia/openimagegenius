@@ -356,25 +356,34 @@ class Repository:
             }
         )
 
-    def query_user_requests(self, unique_user_id: str):
+    def query_user_requests(self, unique_user_id: str, page_size=20, last_evaluated_key=None):
         logger.info("Querying requests for user: %s", unique_user_id)
 
-        response = self.ddb.query(
-            TableName=self.environment.request_table_name,
-            IndexName=self.environment.request_unique_user_id_index,
-            KeyConditionExpression="requester_unique_user_id = :uui",
-            ExpressionAttributeValues={
+        logger.info("Last evaluated key: %s", last_evaluated_key)
+
+        kwargs = {
+            "TableName": self.environment.request_table_name,
+            "IndexName": self.environment.request_unique_user_id_index,
+            "KeyConditionExpression": "requester_unique_user_id = :uui",
+            "ExpressionAttributeValues": {
                 ":uui": {"S": unique_user_id}
-            }
-        )
+            },
+            "Limit": page_size
+        }
+        if last_evaluated_key:
+            kwargs["ExclusiveStartKey"] = last_evaluated_key
+
+        logger.info("Using kwargs: %s", str(kwargs))
+        response = self.ddb.query(**kwargs)
 
         logger.info("Got back as response: %s",  response)
         items = response.get("Items", [])
+        last_evaluated_key = response.get("LastEvaluatedKey")
         parsed_response = []
         for item in items:
             parsed_response.append(RequestModel(
                 **flatten_response(item)))
-        return parsed_response
+        return parsed_response, last_evaluated_key
 
     def query_failed_requests(self):
         logger.info("Querying failed requests")

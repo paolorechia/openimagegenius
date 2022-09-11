@@ -135,7 +135,7 @@ functions:
           route: request
           routeResponseSelectionExpression: $default
     environment:
-        REDIS_LIMIT: 5
+        REDIS_LIMIT: 60
         REDIS_PERIOD: 60
 
 

@@ -5,7 +5,6 @@ import Toolbar from '@mui/material/Toolbar';
 import { Alert, CircularProgress } from '@mui/material';
 
 import Header from './Components/Header';
-import SideMenu from './Components/SideMenu';
 import RequestsMenu from './Components/RequestsMenu';
 import GalleryScreen from './Screens/GalleryScreen';
 import PromptScreen from './Screens/PromptScreen';
@@ -14,14 +13,14 @@ import Unauthorized from './Components/Unauthorized';
 import Snackbar from '@mui/material/Snackbar';
 
 function App() {
-  const [selectedScreen, setScreen] = useState("gallery")
   const [isWebsocketReady, setIsWebsocketReady] = useState(false)
   const [websocketState, setWebsocketState] = useState({
     "connected": false,
     "authorized": false,
     "busy": false,
     "requests": [],
-    "recent_requests": []
+    "recent_requests": [],
+    "last_evaluated_key": null,
   })
   const [notifications, setNotifications] = useState([])
   const [isDrawerOpen, setIsDrawerOpen] = useState(true)
@@ -35,10 +34,6 @@ function App() {
 
   function handleDrawerOpen() {
     setIsDrawerOpen(true)
-  }
-
-  function handleDrawerClose() {
-    setIsDrawerOpen(false)
   }
 
   function handleRequestDrawerOpen() {
@@ -79,12 +74,6 @@ function App() {
         handleRequestDrawerOpen={handleRequestDrawerOpen}
         isRequestsDrawerOpen={isRequestsDrawerOpen}
       />
-      <SideMenu
-        selectedScreen={selectedScreen}
-        setScreenCallback={setScreen}
-        handleDrawerClose={handleDrawerClose}
-        isDrawerOpen={isDrawerOpen}
-      />
       <Box
         component="main"
         sx={{ flexGrow: 1, bgcolor: 'background.default', p: 3 }}
@@ -94,9 +83,10 @@ function App() {
           !websockets.state.connected ?
             <CircularProgress />
             : websockets.state.authorized ?
-              selectedScreen === "prompt"
-                ? <PromptScreen websockets={websockets} />
-                : <GalleryScreen websockets={websockets} />
+              <div>
+                <PromptScreen websockets={websockets} />
+                <GalleryScreen websockets={websockets} />
+              </div>
               : <Unauthorized />
         }
         <RequestsMenu

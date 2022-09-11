@@ -1,6 +1,7 @@
 from openimage_backend_lib import database_models as models
 from pydantic import BaseModel, validator
 from uuid import UUID
+from typing import Dict, Any, Optional
 
 
 class Request(BaseModel):
@@ -35,8 +36,9 @@ class PromptRequest(Request):
             raise ValueError("data exceeds the limit of 1024 characters.")
         return v
 
+
 class PaginationRequestModel(BaseModel):
-    current_page: int = 0
+    last_evaluated_key: Optional[Dict[str, Any]] = None
     page_size: int = 20
 
 

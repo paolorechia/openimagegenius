@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import ImageList from '@mui/material/ImageList';
 import ImageListItem from '@mui/material/ImageListItem';
-
+import Button from '@mui/material/Button';
 
 let default_size = 256
 
@@ -13,6 +13,10 @@ export default function GalleryScreen(props) {
     let minWidth = 300
     let width = 300
     let numberCols = 1
+
+    function loadMore() {
+        props.websockets.manager.send_get_requests()
+    }
 
     useEffect(() => {
         if (fetched === false) {
@@ -31,7 +35,6 @@ export default function GalleryScreen(props) {
 
     return (
         <div>
-            Hello Gallery!
             <ImageList sx={{
                 width: width,
                 height: "100%",
@@ -50,6 +53,11 @@ export default function GalleryScreen(props) {
                     </ImageListItem>
                 ))}
             </ImageList>
+            {props.websockets.state.last_evaluated_key
+                ? <Button onClick={loadMore}> Load more!</Button>
+                : "End of list"
+            }
+
         </div>
 
     )
