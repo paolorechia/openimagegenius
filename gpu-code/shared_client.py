@@ -28,31 +28,31 @@ async def main():
     error_count = 0
 
     while True:
-        logger.info("Connecting to WS dev Gateway...")
-        dev_websocket = await websockets.connect(
-            dev_config.ws_endpoint,
-            extra_headers={
-                "Authorization": dev_config.token
-            }
-        )
-        logger.info("Connecting to WS prod Gateway...")
-        prod_websocket = await websockets.connect(
-            prod_config.ws_endpoint,
-            extra_headers={
-                "Authorization": prod_config.token
-            }
-        )
-        logger.info("Starting WS Clients...")
-        dev_ws_client = WebsocketsClient(dev_websocket)
-        prod_ws_client = WebsocketsClient(prod_websocket)
+        try:
+            logger.info("Connecting to WS dev Gateway...")
+            dev_websocket = await websockets.connect(
+                dev_config.ws_endpoint,
+                extra_headers={
+                    "Authorization": dev_config.token
+                }
+            )
+            logger.info("Connecting to WS prod Gateway...")
+            prod_websocket = await websockets.connect(
+                prod_config.ws_endpoint,
+                extra_headers={
+                    "Authorization": prod_config.token
+                }
+            )
+            logger.info("Starting WS Clients...")
+            dev_ws_client = WebsocketsClient(dev_websocket)
+            prod_ws_client = WebsocketsClient(prod_websocket)
 
-        logger.info("Sending ready states...")
-        await dev_ws_client.send_ready_state(vram=dev_config.user_config.vram)
-        await prod_ws_client.send_ready_state(vram=dev_config.user_config.vram)
+            logger.info("Sending ready states...")
+            await dev_ws_client.send_ready_state(vram=dev_config.user_config.vram)
+            await prod_ws_client.send_ready_state(vram=dev_config.user_config.vram)
 
-        logger.info("Ready! Waiting for messages...")
-        while True:
-            try:
+            logger.info("Ready! Waiting for messages...")
+            while True:
                 clients_in_use = []
                 prod_message = None
                 dev_message = None
@@ -95,11 +95,15 @@ async def main():
                         error_count += 1
                     # logger.info("Sending ready state...")
                     # await ws_client.send_ready_state(vram=dev_config.user_config.vram)
-            except (websockets.exceptions.ConnectionClosedError, asyncio.exceptions.IncompleteReadError, websockets.exceptions.ConnectionClosedOK) as excp:
-                print(excp)
-                logger.info("Connection dropped? Reconnecting...")
-                sleep(1.0)
-                break
+        except (
+            websockets.exceptions.ConnectionClosedError,
+            asyncio.exceptions.IncompleteReadError,
+            websockets.exceptions.ConnectionClosedOK
+        ) as excp:
+            print(excp)
+            logger.info("Connection dropped? Reconnecting...")
+            sleep(1.0)
+            break
 
 if __name__ == "__main__":
     asyncio.run(main())
