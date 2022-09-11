@@ -50,6 +50,7 @@ provider:
     API_ID: ${self:custom.apiGatewayId}
     S3_BUCKET: ${self:custom.generatedImagesBucket}
     RETRYING_LAMBDA_NAME: ${self:service}-${self:provider.stage}-retryingHandler
+    SQS_REQUEST_URL: https://sqs.${aws:region}.amazonaws.com/${aws:accountId}/image-processing-${self:provider.stage}
 
   iam:
     role:
@@ -76,6 +77,11 @@ provider:
             - "lambda:InvokeFunction"
           Resource:
             - "arn:aws:lambda:${aws:region}:${aws:accountId}:function:${self:service}-${self:provider.stage}-retryingHandler"
+        - Effect: Allow
+          Action:
+            - "sqs:SendMessage"
+          Resource:
+            - ${cf:openimagegenius-websockets-api-${self:provider.stage}.ImageProcessingQueue}
 
 functions:
   connectionHandler:
@@ -111,11 +117,12 @@ functions:
 
     layers:
       - Ref: PythonRequirementsLambdaLayer
-    
+
   retryingHandler:
     handler: event_handlers.retrying
     layers:
       - Ref: PythonRequirementsLambdaLayer
+    timeout: 300
 
   defaultHandler:
     handler: event_handlers.default

@@ -159,6 +159,26 @@ class Repository:
             }
         )
 
+    def set_status_for_request(self, request_id: str, status: str) -> None:
+        logger.info("Setting status to '%s' on request: %s",
+                    status, request_id)
+
+        iso, ts = get_iso_and_timestamp_now()
+        self.ddb.update_item(
+            TableName=self.environment.request_table_name,
+            Key={
+                Metadata.RequestTable.primary_key: {
+                    "S": request_id
+                }
+            },
+            UpdateExpression="SET request_status = :rs, update_time_iso = :uti, update_time_timestamp = :utt",
+            ExpressionAttributeValues={
+                ":rs": {"S": status},
+                ":uti": {"S": iso},
+                ":utt": {"S": ts},
+            }
+        )
+
     def set_s3_path_for_request(self, request_id: str, s3_url: str) -> None:
         logger.info("Setting s3_url: %s on request: %s",
                     s3_url, request_id)
@@ -345,6 +365,26 @@ class Repository:
             KeyConditionExpression="requester_unique_user_id = :uui",
             ExpressionAttributeValues={
                 ":uui": {"S": unique_user_id}
+            }
+        )
+
+        logger.info("Got back as response: %s",  response)
+        items = response.get("Items", [])
+        parsed_response = []
+        for item in items:
+            parsed_response.append(RequestModel(
+                **flatten_response(item)))
+        return parsed_response
+
+    def query_failed_requests(self):
+        logger.info("Querying failed requests")
+
+        response = self.ddb.query(
+            TableName=self.environment.request_table_name,
+            IndexName=self.environment.request_status_index,
+            KeyConditionExpression="request_status = :rs",
+            ExpressionAttributeValues={
+                ":rs": {"S": "failed"}
             }
         )
 

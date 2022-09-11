@@ -19,9 +19,10 @@ telegram_client = telegram.get_telegram(requests.Session())
 dynamodb_client = boto3.client("dynamodb")
 api_client = boto3.client('apigatewaymanagementapi')
 lambda_client = boto3.client("lambda")
-
+sqs_client = boto3.client("sqs")
 repository = repo_module.Repository(dynamodb_client, environment)
 
+sqs_queue_url = os.environ["SQS_REQUEST_URL"]
 retrying_lambda_name = os.environ["RETRYING_LAMBDA_NAME"]
 
 
@@ -98,14 +99,19 @@ def status(event, context):
 
 def retrying(event, context):
     logger.info("Event: %s", event)
-    # TODO: query DDB
-    # TODO: push to SQS
-    # sqs_client.send_message(
-    #     QueueUrl=queue_url,
-    #     MessageBody=json.dumps({
-    #         "request_type": request.request_type,
-    #         "data": request.data,
-    #         "unique_request_id": request_id,
-    #         "requester_unique_user_id": request.unique_user_id,
-    #     }),
-    # )
+    failed_requests = repository.query_failed_requests()
+    logger.info("Found %s failed events, retrying them...", len(failed_requests))
+    for failed in failed_requests:
+        sqs_client.send_message(
+            QueueUrl=sqs_queue_url,
+            MessageBody=json.dumps({
+                "request_type": failed.request_type,
+                "data": failed.data,
+                "unique_request_id": failed.request_id,
+                "requester_unique_user_id": failed.requester_unique_user_id,
+            }),
+            DelaySeconds=120, # Wait two minutes until GPU node is ready
+        )
+        repository.set_status_for_request(failed.request_id, "retrying")
+        logger.info("Request %s rescheduled for retrying", failed.request_id)
+    logger.info("All requests rescheduled successfully.")
