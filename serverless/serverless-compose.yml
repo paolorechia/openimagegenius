@@ -3,7 +3,7 @@ services:
   openimagegenius-database:
     path: database
   openimagegenius-auth:
-    path: openimagegenius-auth-lambda
+    path: openimage-auth-lambda
   openimagegenius-websockets-api:
     path: openimage-websockets-api-lambda
   openimagegenius-gpu-websockets:
