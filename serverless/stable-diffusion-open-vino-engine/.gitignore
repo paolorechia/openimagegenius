@@ -1,3 +1,9 @@
+#
+# Ignore big files
+data/
+models/
+test_result.png
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

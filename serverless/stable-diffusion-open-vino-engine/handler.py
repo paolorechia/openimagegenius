@@ -1,21 +1,19 @@
-import json
-
 # -- coding: utf-8 --`
-import argparse
-from operator import is_
-import os
+from dataclasses import dataclass
+import numpy as np
+import cv2
+from diffusers import LMSDiscreteScheduler, PNDMScheduler
+from stable_diffusion_engine import StableDiffusionEngine
+import json
+print("Starting container code...")
 
 # engine
-from stable_diffusion_engine import StableDiffusionEngine
 
 # scheduler
-from diffusers import LMSDiscreteScheduler, PNDMScheduler
 
 # utils
-import cv2
-import numpy as np
-from dataclasses import dataclass
-from PIL import Image, ImageEnhance
+
+print("Libraries loaded...")
 
 
 @dataclass
@@ -58,7 +56,8 @@ def run_sd(args: StableDiffusionArguments):
     )
     image = engine(
         prompt=args.prompt,
-        init_image=None if args.init_image is None else cv2.imread(args.init_image),
+        init_image=None if args.init_image is None else cv2.imread(
+            args.init_image),
         mask=None if args.mask is None else cv2.imread(args.mask, 0),
         strength=args.strength,
         num_inference_steps=args.num_inference_steps,
@@ -73,6 +72,7 @@ def run_sd(args: StableDiffusionArguments):
 
 
 def handler(event, context):
+    print("Getting into handler, event: ", event)
     # Get args
     # randomizer params
     body = json.loads(event.get("body"))
@@ -86,6 +86,9 @@ def handler(event, context):
         num_inference_steps=num_inference_steps,
         guidance_scale=guidance_scale,
     )
+    print("Parsed args:", args)
     image = run_sd(args)
-    body = json.dumps({"message": "wow, no way", "image": image.decode("latin1")})
+    print("Image generated succesfully!")
+    body = json.dumps(
+        {"message": "wow, no way", "image": image.decode("latin1")})
     return {"statusCode": 200, "body": body}
