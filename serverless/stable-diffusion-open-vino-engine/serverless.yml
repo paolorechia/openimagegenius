@@ -9,7 +9,6 @@ provider:
   region: eu-central-1
   memorySize: 10240
   ecr:
-    # In this section you can define images that will be built locally and uploaded to ECR
     images:
       appimage:
         path: ./
@@ -33,7 +32,7 @@ functions:
     url: true
     image:
       name: appimage
-    timeout: 900
+    timeout: 300
     environment:
       S3_BUCKET: open-image-genius-open-vino-models
       MNT_DIR: ${self:custom.LocalMountPath}
