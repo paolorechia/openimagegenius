@@ -53,7 +53,7 @@ for model in ["text_encoder", "unet", "vae_decoder", "vae_encoder"]:
         file_buffer = BytesIO(response["Body"].read())
         filename = os.path.join("/tmp/models/", model)
         print(f"Writing buffer to file {filename}")
-        models[f"{model}-{filetype}"] = file_buffer.getbuffer()
+        models[f"{model}-{filetype}"] = file_buffer.getvalue()
 
 
 class StableDiffusionEngine:
