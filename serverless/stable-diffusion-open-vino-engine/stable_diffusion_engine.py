@@ -4,6 +4,7 @@ Code from repo: https://github.com/bes-dev/stable_diffusion.openvino
 Apache License applies to this source as included in the LICENSE file in this directory.
 """
 
+import boto3
 import inspect
 import numpy as np
 
@@ -19,22 +20,40 @@ from huggingface_hub import hf_hub_download
 from diffusers import LMSDiscreteScheduler, PNDMScheduler
 import cv2
 import os
+from io import BytesIO
 
 
 def result(var):
     return next(iter(var.values()))
 
-import boto3
+
 s3_client = boto3.client("s3")
 bucket = os.environ["S3_BUCKET"]
+model_files = [
+    "text_encoder.bin",
+    "text_encoder.xml",
+    "unet.bin",
+    "unet.xml",
+    "vae_decoder.bin",
+    "vae_decoder.xml",
+    "vae_encoder.bin",
+    "vae_encoder.xml"
+]
 
 models = {}
 for model in ["text_encoder", "unet", "vae_decoder", "vae_encoder"]:
-    
-    with open(f"/tmp/models/{model}/{model}.xml", "rb") as fp:
-        models[f"{model}-xml"] = fp.read()
-    with open(f"/tmp/models/{model}/{model}.bin", "rb") as fp:
-        models[f"{model}-bin"] = fp.read()
+    for filetype in ["xml", "bin"]:
+        if f"{model}-{filetype}" in models:
+            continue
+        response = s3_client.get_object(
+            Bucket=bucket,
+            Key=f"models/{model}/{model}.{filetype}"
+        )
+        print("Reading byte stream into memory")
+        file_buffer = BytesIO(response["Body"].read())
+        filename = os.path.join("/tmp/models/", model)
+        print(f"Writing buffer to file {filename}")
+        models[f"{model}-{filetype}"] = file_buffer.getbuffer()
 
 
 class StableDiffusionEngine:
