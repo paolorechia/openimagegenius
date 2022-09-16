@@ -18,10 +18,23 @@ from tqdm import tqdm
 from huggingface_hub import hf_hub_download
 from diffusers import LMSDiscreteScheduler, PNDMScheduler
 import cv2
+import os
 
 
 def result(var):
     return next(iter(var.values()))
+
+import boto3
+s3_client = boto3.client("s3")
+bucket = os.environ["S3_BUCKET"]
+
+models = {}
+for model in ["text_encoder", "unet", "vae_decoder", "vae_encoder"]:
+    
+    with open(f"/tmp/models/{model}/{model}.xml", "rb") as fp:
+        models[f"{model}-xml"] = fp.read()
+    with open(f"/tmp/models/{model}/{model}.bin", "rb") as fp:
+        models[f"{model}-bin"] = fp.read()
 
 
 class StableDiffusionEngine:
@@ -31,47 +44,37 @@ class StableDiffusionEngine:
         model="bes-dev/stable-diffusion-v1-4-openvino",
         tokenizer="openai/clip-vit-large-patch14",
         device="CPU",
+        models_dir="/src/models"
     ):
-        self.tokenizer = CLIPTokenizer.from_pretrained("./models/clip")
-        # self.tokenizer.save_pretrained("./models/clip")
+        self.tokenizer = CLIPTokenizer.from_pretrained(
+            os.path.join(models_dir, "clip"))
 
+        print(f"Using models_dir {models_dir}", os.listdir(models_dir))
         self.scheduler = scheduler
         # models
         self.core = Core()
         # text features
-        # text_encoder_xml = hf_hub_download(repo_id=model, filename="text_encoder.xml")
-        # text_encoder_bin = hf_hub_download(repo_id=model, filename="text_encoder.bin")
-        text_encoder_xml = "./models/text_encoder/text_encoder.xml"
-        text_encoder_bin = "./models/text_encoder/text_encoder.bin"
 
-        print(text_encoder_xml, text_encoder_bin)
         self._text_encoder = self.core.read_model(
-            text_encoder_xml, text_encoder_bin)
+            models["text_encoder-xml"], models["text_encoder-bin"])
         self.text_encoder = self.core.compile_model(self._text_encoder, device)
         # diffusion
-        unet_xml = "./models/unet/unet.xml"
-        unet_bin = "./models/unet/unet.bin"
 
-        print(unet_xml, unet_bin)
-        self._unet = self.core.read_model(unet_xml, unet_bin)
+        self._unet = self.core.read_model(
+            models["unet-xml"], models["unet-bin"])
         self.unet = self.core.compile_model(self._unet, device)
 
         self.latent_shape = tuple(self._unet.inputs[0].shape)[1:]
 
-        vae_decoder_xml = "./models/vae_decoder/vae_decoder.xml"
-        vae_decoder_bin = "./models/vae_decoder/vae_decoder.bin"
-        print(vae_decoder_xml, vae_decoder_bin)
         # decoder
 
         self._vae_decoder = self.core.read_model(
-            vae_decoder_xml, vae_decoder_bin)
+            models["vae_decoder-xml"], models["vae_decoder-bin"])
         self.vae_decoder = self.core.compile_model(self._vae_decoder, device)
         # encoder
-        vae_encoder_xml = "./models/vae_encoder/vae_encoder.xml"
-        vae_encoder_bin = "./models/vae_encoder/vae_encoder.bin"
-        print(vae_encoder_xml, vae_encoder_bin)
+
         self._vae_encoder = self.core.read_model(
-            vae_encoder_xml, vae_encoder_bin)
+            models["vae_encoder-xml"], models["vae_encoder-bin"])
         self.vae_encoder = self.core.compile_model(self._vae_encoder, device)
         self.init_image_shape = tuple(self._vae_encoder.inputs[0].shape)[2:]
 

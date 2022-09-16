@@ -8,9 +8,24 @@ provider:
   stage: ${opt:stage}
   region: eu-central-1
   memorySize: 10240
-
+  ecr:
+    # In this section you can define images that will be built locally and uploaded to ECR
+    images:
+      appimage:
+        path: ./
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - "s3:GetObject"
+          Resource:
+            - "arn:aws:s3:::open-image-genius-open-vino-models/*"
 functions:
   text2img:
     url: true
-    image: 787492735804.dkr.ecr.eu-central-1.amazonaws.com/cpu-sd-private@sha256:3652cfe1beb826a2675b0739785e905c53828118d43db29f0f02dd833bf53a64
+    image:
+      name: appimage
     timeout: 900
+    environment:
+      S3_BUCKET: open-image-genius-open-vino-models

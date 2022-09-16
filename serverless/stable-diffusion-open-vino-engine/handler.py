@@ -1,19 +1,24 @@
 # -- coding: utf-8 --`
-from dataclasses import dataclass
-import numpy as np
-import cv2
-from diffusers import LMSDiscreteScheduler, PNDMScheduler
-from stable_diffusion_engine import StableDiffusionEngine
-import json
 print("Starting container code...")
+print("Working dir at start...", )
 
-# engine
+# print("Loading os")
+import os
 
-# scheduler
-
-# utils
+import json
+print("Loading SD")
+from stable_diffusion_engine import StableDiffusionEngine
+print("Loading schedulers")
+from diffusers import LMSDiscreteScheduler, PNDMScheduler
+print("Loading cv2")
+import cv2
+print("Loading numpy")
+import numpy as np
+from dataclasses import dataclass
 
 print("Libraries loaded...")
+
+MODELS_IN_LAMBDA = "./models"
 
 
 @dataclass
@@ -21,6 +26,7 @@ class StableDiffusionArguments:
     prompt: str
     num_inference_steps: int
     guidance_scale: float
+    models_dir: str
     seed: int = None
     init_image: str = None
     beta_start: float = 0.00085
@@ -52,7 +58,7 @@ def run_sd(args: StableDiffusionArguments):
             tensor_format="np",
         )
     engine = StableDiffusionEngine(
-        model=args.model, scheduler=scheduler, tokenizer=args.tokenizer
+        model=args.model, scheduler=scheduler, tokenizer=args.tokenizer, models_dir=args.models_dir
     )
     image = engine(
         prompt=args.prompt,
@@ -71,8 +77,23 @@ def run_sd(args: StableDiffusionArguments):
     return byte_im
 
 
-def handler(event, context):
+
+
+def handler(event, context, models_dir=None):
+
     print("Getting into handler, event: ", event)
+    if models_dir is None:
+        models_dir = MODELS_IN_LAMBDA
+
+    print("Models dir ", models_dir)
+
+    print("Working dir at handler...", )
+    current_dir = os.getcwd()
+    print(current_dir)
+    print(os.listdir(current_dir))
+    print("Listing root")
+    print(os.listdir("/"))
+
     # Get args
     # randomizer params
     body = json.loads(event.get("body"))
@@ -85,10 +106,11 @@ def handler(event, context):
         seed=seed,
         num_inference_steps=num_inference_steps,
         guidance_scale=guidance_scale,
+        models_dir=models_dir
     )
     print("Parsed args:", args)
     image = run_sd(args)
-    print("Image generated succesfully!")
+    print("Image generated")
     body = json.dumps(
         {"message": "wow, no way", "image": image.decode("latin1")})
     return {"statusCode": 200, "body": body}
