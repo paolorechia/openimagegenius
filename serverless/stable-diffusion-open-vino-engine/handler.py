@@ -1,24 +1,13 @@
 # -- coding: utf-8 --`
 print("Starting container code...")
-print("Working dir at start...", )
 
-# print("Loading os")
-import os
-
-import json
-print("Loading SD")
-from stable_diffusion_engine import StableDiffusionEngine
-print("Loading schedulers")
-from diffusers import LMSDiscreteScheduler, PNDMScheduler
-print("Loading cv2")
-import cv2
-print("Loading numpy")
-import numpy as np
 from dataclasses import dataclass
-
-print("Libraries loaded...")
-
-MODELS_IN_LAMBDA = "./models"
+import numpy as np
+import cv2
+from diffusers import LMSDiscreteScheduler, PNDMScheduler
+from stable_diffusion_engine import StableDiffusionEngine
+import json
+import os
 
 
 @dataclass
@@ -77,15 +66,8 @@ def run_sd(args: StableDiffusionArguments):
     return byte_im
 
 
-
-
 def handler(event, context, models_dir=None):
-
     print("Getting into handler, event: ", event)
-    if models_dir is None:
-        models_dir = MODELS_IN_LAMBDA
-
-    print("Models dir ", models_dir)
 
     print("Working dir at handler...", )
     current_dir = os.getcwd()

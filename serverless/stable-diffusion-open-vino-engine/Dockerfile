@@ -12,8 +12,6 @@ RUN apt-get update && \
     libcurl4-openssl-dev
 
 COPY requirements.txt /src/
-
-COPY models/clip /src/models/clip
  
 RUN pip3 install -r requirements.txt --target /src/
 COPY handler.py stable_diffusion_engine.py /src/

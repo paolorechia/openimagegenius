@@ -21,11 +21,42 @@ provider:
             - "s3:GetObject"
           Resource:
             - "arn:aws:s3:::open-image-genius-open-vino-models/*"
+        - Effect: Allow
+          Action:
+            - "elasticfilesystem:*"
+          Resource:
+            - "arn:aws:elasticfilesystem:${aws:region}:${aws:accountId}:file-system/${self:custom.fileSystemId}"
+            - "arn:aws:elasticfilesystem:${aws:region}:${aws:accountId}:access-point/${self:custom.efsAccessPoint}"
+
 functions:
-  text2img:
+  textToImg:
     url: true
     image:
       name: appimage
     timeout: 900
     environment:
       S3_BUCKET: open-image-genius-open-vino-models
+      MNT_DIR: ${self:custom.LocalMountPath}
+      LIB_DIR: ${self:custom.LocalMountPath}/lib
+    vpc:
+      securityGroupIds:
+        - ${self:custom.securityGroup}
+      subnetIds:
+        - ${self:custom.subnetsId.subnet0}
+
+
+custom:
+  efsAccessPoint: fsap-00b771e6beaba72c1
+  fileSystemId: fs-0dfb0e1ab26ff529f
+  LocalMountPath: /mnt/fs
+  subnetsId:
+    subnet0: subnet-02516fd8fdb201a49
+  securityGroup: sg-088dad5e11062b97d
+
+resources:
+  extensions:
+    TextToImgLambdaFunction:
+      Properties:
+        FileSystemConfigs:
+          - Arn: "arn:aws:elasticfilesystem:${self:provider.region}:${aws:accountId}:access-point/${self:custom.efsAccessPoint}"
+            LocalMountPath: "${self:custom.LocalMountPath}"

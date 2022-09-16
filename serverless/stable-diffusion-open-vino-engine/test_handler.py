@@ -6,11 +6,11 @@ def test_handler():
     response = handler(
         {
             "body": json.dumps(
-                {"prompt": "A wild forest", "num_inference_steps": "1"}
+                {"prompt": "A wild forest", "num_inference_steps": "10"}
             ),
         },
-        None,
-        "./models" # Hack models_dir into handler for local exec
+        None
+        # Hack models_dir into handler for local exec
     )
     # print(response)
     body = json.loads(response["body"])

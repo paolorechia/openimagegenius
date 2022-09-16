@@ -27,8 +27,8 @@ def result(var):
     return next(iter(var.values()))
 
 
-s3_client = boto3.client("s3")
-bucket = os.environ["S3_BUCKET"]
+# s3_client = boto3.client("s3")
+# bucket = os.environ["S3_BUCKET"]
 model_files = [
     "text_encoder.bin",
     "text_encoder.xml",
@@ -39,21 +39,8 @@ model_files = [
     "vae_encoder.bin",
     "vae_encoder.xml"
 ]
-
-models = {}
-for model in ["text_encoder", "unet", "vae_decoder", "vae_encoder"]:
-    for filetype in ["xml", "bin"]:
-        if f"{model}-{filetype}" in models:
-            continue
-        response = s3_client.get_object(
-            Bucket=bucket,
-            Key=f"models/{model}/{model}.{filetype}"
-        )
-        print("Reading byte stream into memory")
-        file_buffer = BytesIO(response["Body"].read())
-        filename = os.path.join("/tmp/models/", model)
-        print(f"Writing buffer to file {filename}")
-        models[f"{model}-{filetype}"] = file_buffer.getvalue()
+MODELS_IN_LAMBDA = "/mnt/fs/models"
+print("Models in Lambda (efs?)", os.listdir(MODELS_IN_LAMBDA))
 
 
 class StableDiffusionEngine:
@@ -63,10 +50,10 @@ class StableDiffusionEngine:
         model="bes-dev/stable-diffusion-v1-4-openvino",
         tokenizer="openai/clip-vit-large-patch14",
         device="CPU",
-        models_dir="/src/models"
+        models_dir="/mnt/fs/models"
     ):
         self.tokenizer = CLIPTokenizer.from_pretrained(
-            os.path.join(models_dir, "clip"))
+            os.path.join(MODELS_IN_LAMBDA, "clip"))
 
         print(f"Using models_dir {models_dir}", os.listdir(models_dir))
         self.scheduler = scheduler
@@ -75,26 +62,29 @@ class StableDiffusionEngine:
         # text features
 
         self._text_encoder = self.core.read_model(
-            models["text_encoder-xml"], models["text_encoder-bin"])
+            "/mnt/fs/models/text_encoder/text_encoder.xml")
         self.text_encoder = self.core.compile_model(self._text_encoder, device)
         # diffusion
 
-        self._unet = self.core.read_model(
-            models["unet-xml"], models["unet-bin"])
-        self.unet = self.core.compile_model(self._unet, device)
+        self._unet = self.core.read_model("/mnt/fs/models/unet/unet.xml")
+        self.unet = self.core.compile_model(
+            self._unet, device)
 
         self.latent_shape = tuple(self._unet.inputs[0].shape)[1:]
 
         # decoder
-
         self._vae_decoder = self.core.read_model(
-            models["vae_decoder-xml"], models["vae_decoder-bin"])
-        self.vae_decoder = self.core.compile_model(self._vae_decoder, device)
+            "/mnt/fs/models/vae_decoder/vae_decoder.xml")
+
+        self.vae_decoder = self.core.compile_model(
+            self._vae_decoder, device)
         # encoder
 
         self._vae_encoder = self.core.read_model(
-            models["vae_encoder-xml"], models["vae_encoder-bin"])
-        self.vae_encoder = self.core.compile_model(self._vae_encoder, device)
+            "/mnt/fs/models/vae_encoder/vae_encoder.xml")
+        self.vae_encoder = self.core.compile_model(
+            self._vae_encoder, device)
+
         self.init_image_shape = tuple(self._vae_encoder.inputs[0].shape)[2:]
 
     def _preprocess_mask(self, mask):
