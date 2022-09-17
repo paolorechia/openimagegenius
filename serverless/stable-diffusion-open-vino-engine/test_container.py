@@ -11,3 +11,6 @@ response.raise_for_status()
 j = response.json()
 body = json.loads(j["body"])
 print(body["message"])
+bytes_img = body["image"].encode("latin1")
+with open("test_result.png", "w+b") as fp:
+    fp.write(bytes_img)

@@ -1,6 +1,0 @@
-from public.ecr.aws/u8k1c9q4/openimagegenius/cpu-stable-diffusion
-
-COPY handler.py stable_diffusion_engine.py /src/
-
-ENTRYPOINT [ "/usr/local/bin/python", "-m", "awslambdaric" ]
-CMD [ "handler.handler" ]

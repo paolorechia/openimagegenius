@@ -7,9 +7,8 @@ import cv2
 from diffusers import LMSDiscreteScheduler, PNDMScheduler
 from stable_diffusion_engine import StableDiffusionEngine
 import json
-import boto3
+import os
 
-s3_client = boto3.client("s3")
 
 @dataclass
 class StableDiffusionArguments:
@@ -68,6 +67,15 @@ def run_sd(args: StableDiffusionArguments):
 
 
 def handler(event, context, models_dir=None):
+    print("Getting into handler, event: ", event)
+
+    print("Working dir at handler...", )
+    current_dir = os.getcwd()
+    print(current_dir)
+    print(os.listdir(current_dir))
+    print("Listing root")
+    print(os.listdir("/"))
+
     # Get args
     # randomizer params
     body = json.loads(event.get("body"))

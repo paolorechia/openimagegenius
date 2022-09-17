@@ -10,9 +10,7 @@ def test_handler():
             ),
         },
         None
-        # Hack models_dir into handler for local exec
     )
-    # print(response)
     body = json.loads(response["body"])
     assert body["image"]
     bytes_img = body["image"].encode("latin1")
