@@ -1,15 +1,24 @@
 # -- coding: utf-8 --`
-print("Starting container code...")
-
-from dataclasses import dataclass
+from xml.dom.minidom import Attr
+from stable_diffusion_engine import StableDiffusionEngine
+from gpu_node_lib.websockets import message_parser
+from gpu_node_lib.dataclasses import RequestImageGenFromPrompt
+from diffusers import LMSDiscreteScheduler, PNDMScheduler
 import numpy as np
 import cv2
-from diffusers import LMSDiscreteScheduler, PNDMScheduler
-from stable_diffusion_engine import StableDiffusionEngine
-import json
 import boto3
+from dataclasses import dataclass
+import os
+import logging
+import json
+print("Starting container code...")
+
 
 s3_client = boto3.client("s3")
+bucket = os.environ["S3_BUCKET"]
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
 
 @dataclass
 class StableDiffusionArguments:
@@ -68,13 +77,42 @@ def run_sd(args: StableDiffusionArguments):
 
 
 def handler(event, context, models_dir=None):
-    # Get args
-    # randomizer params
-    body = json.loads(event.get("body"))
-    prompt = body["prompt"]
-    seed = body.get("seed")
-    num_inference_steps: int = int(body.get("num_inference_steps", 32))
-    guidance_scale: float = float(body.get("guidance_scale", 7.5))
+    logger.info("Event :%s", event)
+
+    records = event["Records"]
+    first = records[0]
+    body = first["body"]
+    logger.info("Body :%s", body)
+    parsed, type_, error_message = message_parser(body)
+    if error_message:
+        logger.error("Error: %s", error_message)
+
+    logger.info("Parsed: %s", parsed)
+    if type_ != RequestImageGenFromPrompt:
+        return {"statusCode": 400, "body": "Failed to parse message!"}
+
+    prompt = parsed.prompt
+
+    seed = None
+    num_inference_steps = 32
+    guidance_scale = 7.5
+
+    # These are not read yet, using default values instead
+    try:
+        seed = parsed.seed
+    except AttributeError:
+        pass
+
+    try:
+        num_inference_steps = parsed.num_inference_steps
+    except AttributeError:
+        pass
+
+    try:
+        guidance_scale = parsed.guidance_scale
+    except AttributeError:
+        pass
+
     args = StableDiffusionArguments(
         prompt=prompt,
         seed=seed,
@@ -82,9 +120,15 @@ def handler(event, context, models_dir=None):
         guidance_scale=guidance_scale,
         models_dir=models_dir
     )
-    print("Parsed args:", args)
+    logger.info("Calling Stable Diffusion Engine with args: %s", args)
     image = run_sd(args)
-    print("Image generated")
-    body = json.dumps(
-        {"message": "wow, no way", "image": image.decode("latin1")})
+    logger.info("Image is generated, uploading to S3 bucket...")
+    # Upload to S3
+    s3_client.put_object(
+        Bucket=bucket,
+        Key=parsed.s3_url,
+        Body=image,
+        ContentType="image/jpeg",
+    )
+    logger.info("Image is uploaded to S3 bucket.")
     return {"statusCode": 200, "body": body}

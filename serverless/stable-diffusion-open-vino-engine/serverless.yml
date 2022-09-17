@@ -17,9 +17,9 @@ provider:
       statements:
         - Effect: Allow
           Action:
-            - "s3:GetObject"
+            - "s3:PutObject"
           Resource:
-            - "arn:aws:s3:::open-image-genius-open-vino-models/*"
+            - "arn:aws:s3:::${self:custom.generatedImagesBucket}/*"
         - Effect: Allow
           Action:
             - "elasticfilesystem:*"
@@ -34,9 +34,8 @@ functions:
       name: appimage
     timeout: 300
     environment:
-      S3_BUCKET: open-image-genius-open-vino-models
+      S3_BUCKET: ${self:custom.generatedImagesBucket}
       MNT_DIR: ${self:custom.LocalMountPath}
-      LIB_DIR: ${self:custom.LocalMountPath}/lib
     vpc:
       securityGroupIds:
         - ${self:custom.securityGroup}
@@ -51,6 +50,7 @@ custom:
   subnetsId:
     subnet0: subnet-02516fd8fdb201a49
   securityGroup: sg-088dad5e11062b97d
+  generatedImagesBucket: ${cf:openimagegenius-image-buckets-${self:provider.stage}.GeneratedImagesBucket}
 
 resources:
   extensions:
