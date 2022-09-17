@@ -29,7 +29,6 @@ provider:
 
 functions:
   textToImg:
-    url: true
     image:
       name: appimage
     timeout: 300
@@ -41,7 +40,10 @@ functions:
         - ${self:custom.securityGroup}
       subnetIds:
         - ${self:custom.subnetsId.subnet0}
-
+    events:
+      - sqs:
+          arn: ${cf:openimagegenius-websockets-api-${self:provider.stage}.ImageCPUProcessingQueue}
+          batchSize: 1
 
 custom:
   efsAccessPoint: fsap-00b771e6beaba72c1

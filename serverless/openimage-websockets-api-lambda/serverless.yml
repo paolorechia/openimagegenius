@@ -44,7 +44,7 @@ provider:
     # Telegram
     TELEGRAM_TOKEN: ${ssm:/${self:provider.stage}/telegram/token}
     TELEGRAM_CHAT_ID: ${ssm:/${self:provider.stage}/telegram/chat_id}
-    
+
     # REDIS
     REDIS_URL: ${ssm:/${self:provider.stage}/redis/url}
     REDIS_TOKEN: ${ssm:/${self:provider.stage}/redis/token}
@@ -86,6 +86,7 @@ provider:
             - "sqs:SendMessage"
           Resource:
             - "arn:aws:sqs:${self:provider.region}:*:${self:custom.imageProcessingQueueName}"
+            - "arn:aws:sqs:${self:provider.region}:*:${self:custom.imageCPUProcessingQueueName}"
 
 functions:
   connectionHandler:
@@ -118,7 +119,7 @@ functions:
     environment:
       REDIS_LIMIT: 10
       REDIS_PERIOD: 300
-    
+
   defaultHandler:
     handler: event_handlers.default
     events:
@@ -135,9 +136,8 @@ functions:
           route: request
           routeResponseSelectionExpression: $default
     environment:
-        REDIS_LIMIT: 60
-        REDIS_PERIOD: 60
-
+      REDIS_LIMIT: 60
+      REDIS_PERIOD: 60
 
   databaseUpdateHandler:
     handler: event_handlers.update
@@ -166,6 +166,8 @@ plugins:
   - serverless-python-requirements
 
 custom:
+  imageCPUProcessingQueueName: image-cpu-processing-${self:provider.stage}
+  imageCPUProcessingQueueUrl: !Ref ImageCPUProcessingQueue
   imageProcessingQueueName: image-processing-${self:provider.stage}
   imageProcessingQueueUrl: !Ref ImageProcessingQueue
   apiGatewayIdMapping:
@@ -211,9 +213,32 @@ resources:
           maxReceiveCount: 1
         VisibilityTimeout: 30
 
+    ImageCPUProcessingQueueDLQ:
+      Type: AWS::SQS::Queue
+      Properties:
+        DelaySeconds: 0
+        QueueName: image-cpu-processing-dead-letter-queue-${self:provider.stage}
+        VisibilityTimeout: 30
+
+    ImageCPUProcessingQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        DelaySeconds: 0
+        QueueName: ${self:custom.imageCPUProcessingQueueName}
+        RedrivePolicy:
+          deadLetterTargetArn: !GetAtt ImageCPUProcessingQueueDLQ.Arn
+          maxReceiveCount: 1
+        VisibilityTimeout: 300 # CPU takes longer ;)
+
   Outputs:
     ImageProcessingQueue:
       Export:
         Name: image-processing-queue-${self:provider.stage}-arn
       Value:
         Fn::GetAtt: ImageProcessingQueue.Arn
+
+    ImageCPUProcessingQueue:
+      Export:
+        Name: image-cpu-processing-queue-${self:provider.stage}-arn
+      Value:
+        Fn::GetAtt: ImageCPUProcessingQueue.Arn
