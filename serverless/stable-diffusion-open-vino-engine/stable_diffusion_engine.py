@@ -2,9 +2,13 @@
 Code from repo: https://github.com/bes-dev/stable_diffusion.openvino
 
 Apache License applies to this source as included in the LICENSE file in this directory.
+
+This code has been MODIFIED to:
+
+- Read OS an environment variable that is configured for use within an AWS Lambda.
+- Read models from a local file system. Specifically, in a way compatible with AWS Elastic File System mount points.
 """
 
-import boto3
 import inspect
 import numpy as np
 
@@ -16,19 +20,15 @@ from transformers import CLIPTokenizer
 
 # utils
 from tqdm import tqdm
-from huggingface_hub import hf_hub_download
 from diffusers import LMSDiscreteScheduler, PNDMScheduler
 import cv2
 import os
-from io import BytesIO
 
 
 def result(var):
     return next(iter(var.values()))
 
 
-# s3_client = boto3.client("s3")
-# bucket = os.environ["S3_BUCKET"]
 model_files = [
     "text_encoder.bin",
     "text_encoder.xml",
@@ -39,7 +39,7 @@ model_files = [
     "vae_encoder.bin",
     "vae_encoder.xml"
 ]
-MODELS_IN_LAMBDA = "/mnt/fs/models"
+MODELS_IN_LAMBDA = os.path.join(os.environ["MNT_DIR"], "models")
 print("Models in Lambda (efs?)", os.listdir(MODELS_IN_LAMBDA))
 
 
@@ -62,11 +62,12 @@ class StableDiffusionEngine:
         # text features
 
         self._text_encoder = self.core.read_model(
-            "/mnt/fs/models/text_encoder/text_encoder.xml")
+            os.path.join(MODELS_IN_LAMBDA, "text_encoder/text_encoder.xml"))
         self.text_encoder = self.core.compile_model(self._text_encoder, device)
         # diffusion
 
-        self._unet = self.core.read_model("/mnt/fs/models/unet/unet.xml")
+        self._unet = self.core.read_model(
+            os.path.join(MODELS_IN_LAMBDA, "unet/unet.xml"))
         self.unet = self.core.compile_model(
             self._unet, device)
 
@@ -74,14 +75,14 @@ class StableDiffusionEngine:
 
         # decoder
         self._vae_decoder = self.core.read_model(
-            "/mnt/fs/models/vae_decoder/vae_decoder.xml")
+            os.path.join(MODELS_IN_LAMBDA, "vae_decoder/vae_decoder.xml"))
 
         self.vae_decoder = self.core.compile_model(
             self._vae_decoder, device)
         # encoder
 
         self._vae_encoder = self.core.read_model(
-            "/mnt/fs/models/vae_encoder/vae_encoder.xml")
+            os.path.join(MODELS_IN_LAMBDA, "vae_encoder/vae_encoder.xml"))
         self.vae_encoder = self.core.compile_model(
             self._vae_encoder, device)
 
