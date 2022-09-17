@@ -51,6 +51,7 @@ provider:
     S3_BUCKET: ${self:custom.generatedImagesBucket}
     RETRYING_LAMBDA_NAME: ${self:service}-${self:provider.stage}-retryingHandler
     SQS_REQUEST_URL: https://sqs.${aws:region}.amazonaws.com/${aws:accountId}/image-processing-${self:provider.stage}
+    SQS_CPU_PROCESSING_QUEUE_URL: ${self:custom.sqsCpuProcessingQueueUrl}
 
   iam:
     role:
@@ -161,6 +162,7 @@ plugins:
 
 custom:
   generatedImagesBucket: ${cf:openimagegenius-image-buckets-${self:provider.stage}.GeneratedImagesBucket}
+  sqsCpuProcessingQueueUrl: !Ref ${cf:openimagegenius-websockets-api-${self:provider.stage}.ImageCPUProcessingQueue}
   apiGatewayIdMapping:
     dev: cwo3f8h30b
     prod: 3r1ifo4vod

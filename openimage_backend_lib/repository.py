@@ -1,6 +1,6 @@
 from enum import unique
 from .date_helper import get_iso_and_timestamp_now
-from .database_models import Metadata, RequestModel, UserModel, APITokenModel, ConnectionModel
+from .database_models import Metadata, RequestModel, UserModel, APITokenModel, ConnectionModel, LambdaAvailabilityModel
 from typing import Optional, List
 import os
 import logging
@@ -174,6 +174,27 @@ class Repository:
             UpdateExpression="SET request_status = :rs, update_time_iso = :uti, update_time_timestamp = :utt",
             ExpressionAttributeValues={
                 ":rs": {"S": status},
+                ":uti": {"S": iso},
+                ":utt": {"S": ts},
+            }
+        )
+
+    def set_handled_by_lambda_for_request(self, request_id: str) -> None:
+        logger.info(
+            "Setting status to 'lambda_scheduled' on request: %s", request_id)
+
+        iso, ts = get_iso_and_timestamp_now()
+        self.ddb.update_item(
+            TableName=self.environment.request_table_name,
+            Key={
+                Metadata.RequestTable.primary_key: {
+                    "S": request_id
+                }
+            },
+            UpdateExpression="SET request_status = :rs, update_time_iso = :uti, update_time_timestamp = :utt, gpu_user_id = :gui",
+            ExpressionAttributeValues={
+                ":rs": {"S": "lambda_scheduled"},
+                ":gui": {"S": "lambda"},
                 ":uti": {"S": iso},
                 ":utt": {"S": ts},
             }
@@ -404,3 +425,29 @@ class Repository:
             parsed_response.append(RequestModel(
                 **flatten_response(item)))
         return parsed_response
+
+    def is_lambda_available(self):
+        logger.info("Checking if lambda is available")
+        response = self.ddb.get_item(
+            TableName=self.environment.api_token_table_name,
+            Key={"S": "lambda"}
+        )
+        logger.info("Response: %s", response)
+        lambda_row: LambdaAvailabilityModel = response.get("Item")
+        if not lambda_row:
+            return False
+        if lambda_row.quota_limit < lambda_row.number_requests:
+            return True
+        return False
+
+    def increment_lambda_request(self):
+        logger.info("Incrementing lambda request")
+        self.ddb.update_item(
+            TableName=self.environment.api_token_table_name,
+            Key={"S": "lambda"},
+            UpdateExpression="SET number_requests = number_requests + :inc",
+            ExpressionAttributeValues={
+                ":inc": {"N": "1"}
+            }
+        )
+        logger.info("Incremented lambda request")

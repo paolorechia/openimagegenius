@@ -16,6 +16,7 @@ from openimage_backend_lib import telegram
 API_ID = os.environ["API_ID"]
 STAGE = os.environ["AUTHORIZER_STAGE"]
 REGION = os.environ["AWS_REGION"]
+SQS_CPU_QUEUE_URL = os.environ["SQS_CPU_PROCESSING_QUEUE_URL"]
 s3_bucket = os.environ["S3_BUCKET"]
 
 api_endpoint = f"https://{API_ID}.execute-api.{REGION}.amazonaws.com/{STAGE}"
@@ -24,6 +25,7 @@ api_client = boto3.client("apigatewaymanagementapi",
 
 dynamodb_client = boto3.client("dynamodb")
 s3_client = boto3.client("s3")
+sqs_client = boto3.client("sqs")
 
 environment = repo_module.EnvironmentInfo()
 repository = repo_module.Repository(dynamodb_client, environment)
@@ -110,9 +112,33 @@ def handler(event, context):
                     repository.set_status_for_token(
                         api_token=node.api_token, status="ready")
 
-        if not found_gpu_node or not has_job_started:
-            repository.set_failed_status_for_request(request_id)
         if not found_gpu_node:
+            logger.info("No nodes are available. Trying Lambda instead.")
+            is_lambda_available = repository.is_lambda_available()
+            if is_lambda_available:
+                s3_url = f"{user_unique_id}/{request_id}.jpg"
+                payload = json.dumps({
+                    "message_type": "request_prompt",
+                    "prompt": data,
+                    "request_id": request_id,
+                    "s3_url": s3_url,
+                    "s3_fields": {}
+                })
+                # Send Request to SQS
+                sqs_client.send_message(
+                    QueueUrl=SQS_CPU_QUEUE_URL,
+                    MessageBody=payload
+                )
+                has_job_started = True
+                repository.set_handled_by_lambda_for_request(
+                    request_id=request_id)
+
+                repository.increment_lambda_request()
+
+
+        if not has_job_started:
+            repository.set_failed_status_for_request(request_id)
+        if not has_job_started:
             telegram_client.send_message(
                 f"Job {request_id} has failed. Reason: no GPU nodes are in ready state.")
         if not has_job_started:
