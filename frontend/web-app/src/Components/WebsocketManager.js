@@ -160,7 +160,7 @@ function WebsocketManagerFactory() {
                 return // No need to notify
             }
 
-            if (obj.message_type === "request_accepted") {
+            if (obj.message_type === "request_accepted" || obj.message_type === "lambda_scheduled") {
                 this.setState({
                     ...this.state,
                     busy: true,

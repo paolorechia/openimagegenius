@@ -237,8 +237,8 @@ resources:
       Value:
         Fn::GetAtt: ImageProcessingQueue.Arn
 
-    ImageCPUProcessingQueue:
+    ImageCPUProcessingQueueURL:
       Export:
-        Name: image-cpu-processing-queue-${self:provider.stage}-arn
+        Name: image-cpu-processing-queue-${self:provider.stage}-url
       Value:
-        Fn::GetAtt: ImageCPUProcessingQueue.Arn
+        !Ref ImageCPUProcessingQueue

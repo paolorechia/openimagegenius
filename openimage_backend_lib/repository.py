@@ -1,9 +1,11 @@
-from enum import unique
-from .date_helper import get_iso_and_timestamp_now
-from .database_models import Metadata, RequestModel, UserModel, APITokenModel, ConnectionModel, LambdaAvailabilityModel
-from typing import Optional, List
-import os
 import logging
+import os
+from typing import List, Optional
+
+from .database_models import (LAMBDA_DEFAULT_QUOTA_LIMIT, APITokenModel,
+                              ConnectionModel, LambdaAvailabilityModel,
+                              Metadata, RequestModel, UserModel)
+from .date_helper import get_iso_and_timestamp_now
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -435,7 +437,22 @@ class Repository:
         logger.info("Response: %s", response)
         lambda_row: LambdaAvailabilityModel = response.get("Item")
         if not lambda_row:
-            return False
+            iso, ts = get_iso_and_timestamp_now()
+            self.ddb.put_item(
+                TableName=self.environment.api_token_table_name,
+                Key={"S": "lambda"},
+                Item={
+                    "api_token": {"S": "lambda"},
+                    "unique_user_id":  {"S": "lambda"},
+                    "connection_id":  {"S": "lambda"},
+                    "node_status":  {"S": "lambda"},
+                    "update_time_iso":  {"S": iso},
+                    "update_time_timestamp": {"S": ts},
+                    "quota_limit": {"N": LAMBDA_DEFAULT_QUOTA_LIMIT},
+                    "number_requests": {"N": 1}
+                }
+            )
+            return True
         if lambda_row.quota_limit < lambda_row.number_requests:
             return True
         return False

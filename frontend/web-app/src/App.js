@@ -89,7 +89,7 @@ function App() {
             : websockets.state.authorized ?
               <div>
                 <PromptScreen websockets={websockets} />
-                <GalleryScreen 
+                <GalleryScreen
                   setCurrentImage={setCurrentImage}
                   websockets={websockets}
                 />
@@ -120,12 +120,14 @@ function App() {
                     ? <Alert severity='error' onClose={handleSnackBarClose}>Authorization failed!</Alert>
                     : notification.message_type === "request_accepted"
                       ? <Alert severity="success" onClose={handleSnackBarClose}>Your request has been accepted.</Alert>
-                      : notification.message_type === "job_complete"
-                        ? <Alert severity="success" onClose={handleSnackBarClose}>A job has completed!</Alert>
-                        :
-                        notification.message_type === "job_failed"
-                          ? <Alert severity="error" onClose={handleSnackBarClose}>A job has failed!</Alert>
-                          : <Alert severity="error" onClose={handleSnackBarClose}>An error has occurred: {notification.data}</Alert>
+                      : notification.message_type === "lambda_scheduled"
+                        ? <Alert severity="warning" onClose={handleSnackBarClose}>Your request was offloaded to CPU in the cloud. This may take a few minutes.</Alert>
+                        : notification.message_type === "job_complete"
+                          ? <Alert severity="success" onClose={handleSnackBarClose}>A job has completed!</Alert>
+                          :
+                          notification.message_type === "job_failed"
+                            ? <Alert severity="error" onClose={handleSnackBarClose}>A job has failed!</Alert>
+                            : <Alert severity="error" onClose={handleSnackBarClose}>An error has occurred: {notification.data}</Alert>
               }
             </Snackbar>
           </Box>
