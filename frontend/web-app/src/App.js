@@ -127,7 +127,7 @@ function App() {
                           :
                           notification.message_type === "job_failed"
                             ? <Alert severity="error" onClose={handleSnackBarClose}>A job has failed!</Alert>
-                            : <Alert severity="error" onClose={handleSnackBarClose}>An error has occurred: {notification.data}</Alert>
+                            : <Alert severity="error" onClose={handleSnackBarClose}>An error has occurred.</Alert>
               }
             </Snackbar>
           </Box>

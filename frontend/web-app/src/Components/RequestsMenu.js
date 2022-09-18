@@ -70,12 +70,13 @@ export default function RequestsMenu(props) {
                                                 }
 
                                             </ListItemIcon>
+
                                             <Stack>
                                                 <ListItemText primary={request.data.request_id.substring(0, 5)} />
                                                 <ListItemText
                                                     primary={request.data.prompt.substring(0, 24)}
-                                                />
-                                            </Stack>
+                                                /></Stack>
+
                                         </ListItemButton>
                                     </ListItem>
                                 </List>

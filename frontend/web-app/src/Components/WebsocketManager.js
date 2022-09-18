@@ -160,7 +160,7 @@ function WebsocketManagerFactory() {
                 return // No need to notify
             }
 
-            if (obj.message_type === "request_accepted" || obj.message_type === "lambda_scheduled") {
+            if (obj.message_type === "request_accepted") {
                 this.setState({
                     ...this.state,
                     busy: true,
@@ -170,7 +170,7 @@ function WebsocketManagerFactory() {
                 })
             }
 
-            if (obj.message_type === "job_complete" || obj.message_type === "job_failed") {
+            if (obj.message_type === "job_complete" || obj.message_type === "job_failed" || obj.message_type === "lambda_scheduled") {
                 console.log("Got job update", obj.message_type)
                 let merged_recent_requests = this.state.recent_requests.map(request => {
                     if (request.data.request_id === obj.data.request_id) {
@@ -191,6 +191,7 @@ function WebsocketManagerFactory() {
                 }
 
                 if (obj.message_type === "job_complete") {
+                    console.log("Job complete, updating current image", obj.data)
                     newState.current_image = obj.data
                 }
 

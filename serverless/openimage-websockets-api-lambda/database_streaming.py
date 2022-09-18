@@ -85,8 +85,13 @@ def update_handler(event, context):
             update_time_iso = reader.get("update_time_iso")
             if request_status == "completed" or request_status == "lambda_scheduled":
                 s3_url = reader.get("s3_url")
+                if request_status == "completed":
+                    message_type = "job_complete"
+                else:
+                    message_type = request_status
+
                 payload = json.dumps({
-                    "message_type": request_status,
+                    "message_type": message_type,
                     "data": {
                         "s3_url": s3_url,
                         "prompt": reader.get("data"),
