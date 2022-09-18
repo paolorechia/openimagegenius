@@ -23,6 +23,7 @@ class Request(BaseModel):
 
 class PromptRequest(Request):
     request_type: str = "prompt"
+    num_inference_steps: int = 50
 
     @validator('request_type')
     def request_type_validator(cls, v):

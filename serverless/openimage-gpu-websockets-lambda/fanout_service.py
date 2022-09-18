@@ -33,6 +33,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 telegram_client = telegram.get_telegram(Session())
 
+DEFAULT_CPU_NUM_INFERENCE_STEPS = 12
 
 def handler(event, context):
     """Sample event:
@@ -122,6 +123,7 @@ def handler(event, context):
                     payload = json.dumps({
                         "message_type": "request_prompt",
                         "prompt": data,
+                        "num_inference_steps": DEFAULT_CPU_NUM_INFERENCE_STEPS,
                         "request_id": request_id,
                         "s3_url": s3_url,
                         "s3_fields": {}

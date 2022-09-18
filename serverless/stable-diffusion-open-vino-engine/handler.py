@@ -9,10 +9,27 @@ from dataclasses import dataclass
 import os
 import logging
 
+
 s3_client = boto3.client("s3")
 bucket = os.environ["S3_BUCKET"]
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+
+scheduler = LMSDiscreteScheduler(
+    beta_start=0.00085,
+    beta_end=0.012,
+    beta_schedule="scaled_linear",
+    tensor_format="np",
+)
+
+print("Loading SD Engine...")
+stable_diffusion_engine = StableDiffusionEngine(
+    model="bes-dev/stable-diffusion-v1-4-openvino",
+    tokenizer="openai/clip-vit-large-patch14",
+    device="CPU",
+    models_dir="/mnt/fs/models",
+    scheduler=scheduler,
+)
 
 
 @dataclass
@@ -23,9 +40,6 @@ class StableDiffusionArguments:
     models_dir: str
     seed: int = None
     init_image: str = None
-    beta_start: float = 0.00085
-    beta_end: float = 0.012
-    beta_schedule: str = "scaled_linear"
     model: str = "bes-dev/stable-diffusion-v1-4-openvino"
     mask: str = None
     strength: float = 0.5
@@ -36,25 +50,7 @@ class StableDiffusionArguments:
 def run_sd(args: StableDiffusionArguments):
     if args.seed is not None:
         np.random.seed(args.seed)
-    if args.init_image is None:
-        scheduler = LMSDiscreteScheduler(
-            beta_start=args.beta_start,
-            beta_end=args.beta_end,
-            beta_schedule=args.beta_schedule,
-            tensor_format="np",
-        )
-    else:
-        scheduler = PNDMScheduler(
-            beta_start=args.beta_start,
-            beta_end=args.beta_end,
-            beta_schedule=args.beta_schedule,
-            skip_prk_steps=True,
-            tensor_format="np",
-        )
-    engine = StableDiffusionEngine(
-        model=args.model, scheduler=scheduler, tokenizer=args.tokenizer, models_dir=args.models_dir
-    )
-    image = engine(
+    image = stable_diffusion_engine(
         prompt=args.prompt,
         init_image=None if args.init_image is None else cv2.imread(
             args.init_image),
@@ -87,26 +83,9 @@ def handler(event, context, models_dir=None):
         return {"statusCode": 400, "body": "Failed to parse message!"}
 
     prompt = parsed.prompt
-
-    seed = None
-    num_inference_steps = 32
-    guidance_scale = 7.5
-
-    # These are not read yet, using default values instead
-    try:
-        seed = parsed.seed
-    except AttributeError:
-        pass
-
-    try:
-        num_inference_steps = parsed.num_inference_steps
-    except AttributeError:
-        pass
-
-    try:
-        guidance_scale = parsed.guidance_scale
-    except AttributeError:
-        pass
+    seed = parsed.seed
+    num_inference_steps = parsed.num_inference_steps
+    guidance_scale = parsed.guidance_scale
 
     args = StableDiffusionArguments(
         prompt=prompt,
