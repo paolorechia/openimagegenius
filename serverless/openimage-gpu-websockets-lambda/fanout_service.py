@@ -75,7 +75,7 @@ def handler(event, context):
     user_unique_id = json_body["requester_unique_user_id"]
     has_job_started = False
     found_gpu_node = False
-    excp = ""
+    raised_exception = ""
     if json_body["request_type"] == "prompt":
         # Find an available node
         # Presign an S3 post URL
@@ -106,6 +106,7 @@ def handler(event, context):
                         request_id=request_id, unique_user_id=node.unique_user_id)
                 except Exception as excp:
                     logger.error("Exception: %s", str(excp))
+                    raised_exception = str(excp)
                     traceback.print_exc(file=sys.stdout)
                 finally:
                     sleep(1.0)
@@ -113,28 +114,36 @@ def handler(event, context):
                         api_token=node.api_token, status="ready")
 
         if not found_gpu_node:
-            logger.info("No nodes are available. Trying Lambda instead.")
-            is_lambda_available = repository.is_lambda_available()
-            if is_lambda_available:
-                s3_url = f"{user_unique_id}/{request_id}.jpg"
-                payload = json.dumps({
-                    "message_type": "request_prompt",
-                    "prompt": data,
-                    "request_id": request_id,
-                    "s3_url": s3_url,
-                    "s3_fields": {}
-                })
-                # Send Request to SQS
-                sqs_client.send_message(
-                    QueueUrl=SQS_CPU_QUEUE_URL,
-                    MessageBody=payload
-                )
-                has_job_started = True
-                repository.set_handled_by_lambda_for_request(
-                    request_id=request_id)
+            try:
+                logger.info("No nodes are available. Trying Lambda instead.")
+                is_lambda_available = repository.is_lambda_available()
+                if is_lambda_available:
+                    s3_url = f"{user_unique_id}/{request_id}.jpg"
+                    payload = json.dumps({
+                        "message_type": "request_prompt",
+                        "prompt": data,
+                        "request_id": request_id,
+                        "s3_url": s3_url,
+                        "s3_fields": {}
+                    })
+                    # Send Request to SQS
+                    sqs_client.send_message(
+                        QueueUrl=SQS_CPU_QUEUE_URL,
+                        MessageBody=payload
+                    )
+                    has_job_started = True
+                    repository.set_handled_by_lambda_for_request(
+                        request_id=request_id)
 
-                repository.increment_lambda_request()
-
+                    repository.increment_lambda_request()
+                else:
+                    logger.critical(
+                        "No nodes are available and Lambda is not available.")
+                    raised_exception = "Lambda quota limit reached."
+            except Exception as excp:
+                logger.error("Exception: %s", str(excp))
+                raised_exception = str(excp)
+                traceback.print_exc(file=sys.stdout)
 
         if not has_job_started:
             repository.set_failed_status_for_request(request_id)
@@ -143,7 +152,7 @@ def handler(event, context):
                 f"Job {request_id} has failed. Reason: no GPU nodes are in ready state.")
         if not has_job_started:
             telegram_client.send_message(
-                f"Job {request_id} has failed. Exception: {excp}")
+                f"Job {request_id} has failed. Exception: {raised_exception}")
             raise ValueError(
                 f"Failed to run job for request_id: {request_id}")
     else:

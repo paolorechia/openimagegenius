@@ -432,15 +432,14 @@ class Repository:
         logger.info("Checking if lambda is available")
         response = self.ddb.get_item(
             TableName=self.environment.api_token_table_name,
-            Key={"S": "lambda"}
+            Key={Metadata.APITokenTable.primary_key: {"S": "lambda"}},
         )
         logger.info("Response: %s", response)
-        lambda_row: LambdaAvailabilityModel = response.get("Item")
-        if not lambda_row:
+        item = response.get("Item")
+        if not item:
             iso, ts = get_iso_and_timestamp_now()
             self.ddb.put_item(
                 TableName=self.environment.api_token_table_name,
-                Key={"S": "lambda"},
                 Item={
                     "api_token": {"S": "lambda"},
                     "unique_user_id":  {"S": "lambda"},
@@ -448,12 +447,16 @@ class Repository:
                     "node_status":  {"S": "lambda"},
                     "update_time_iso":  {"S": iso},
                     "update_time_timestamp": {"S": ts},
-                    "quota_limit": {"N": LAMBDA_DEFAULT_QUOTA_LIMIT},
-                    "number_requests": {"N": 1}
+                    "quota_limit": {"N": str(LAMBDA_DEFAULT_QUOTA_LIMIT)},
+                    "number_requests": {"N": "1"}
                 }
             )
             return True
-        if lambda_row.quota_limit < lambda_row.number_requests:
+        logger.info("Unpacking item...")
+        lambda_row: LambdaAvailabilityModel = LambdaAvailabilityModel(
+            **flatten_response(item))
+        logger.info("Unpacked: %s", lambda_row)
+        if int(lambda_row.number_requests) < int(lambda_row.quota_limit):
             return True
         return False
 
@@ -461,7 +464,7 @@ class Repository:
         logger.info("Incrementing lambda request")
         self.ddb.update_item(
             TableName=self.environment.api_token_table_name,
-            Key={"S": "lambda"},
+            Key={Metadata.APITokenTable.primary_key: {"S": "lambda"}},
             UpdateExpression="SET number_requests = number_requests + :inc",
             ExpressionAttributeValues={
                 ":inc": {"N": "1"}

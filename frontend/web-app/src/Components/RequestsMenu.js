@@ -62,9 +62,11 @@ export default function RequestsMenu(props) {
                                                 {
                                                     request.message_type === "request_accepted"
                                                         ? <HourglassTopIcon color="primary" />
-                                                        : request.message_type === "job_complete"
-                                                            ? <CheckCircleIcon color="success" />
-                                                            : <ErrorIcon color="error" />
+                                                        : request.message_type === "lambda_scheduled"
+                                                            ? <HourglassTopIcon color="secondary" />
+                                                            : request.message_type === "job_complete"
+                                                                ? <CheckCircleIcon color="success" />
+                                                                : <ErrorIcon color="error" />
                                                 }
 
                                             </ListItemIcon>

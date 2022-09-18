@@ -1,8 +1,6 @@
 # -- coding: utf-8 --`
-from xml.dom.minidom import Attr
 from stable_diffusion_engine import StableDiffusionEngine
-from gpu_node_lib.websockets import message_parser
-from gpu_node_lib.dataclasses import RequestImageGenFromPrompt
+from message_types import RequestImageGenFromPrompt, message_parser
 from diffusers import LMSDiscreteScheduler, PNDMScheduler
 import numpy as np
 import cv2
@@ -10,9 +8,6 @@ import boto3
 from dataclasses import dataclass
 import os
 import logging
-import json
-print("Starting container code...")
-
 
 s3_client = boto3.client("s3")
 bucket = os.environ["S3_BUCKET"]
@@ -124,11 +119,11 @@ def handler(event, context, models_dir=None):
     image = run_sd(args)
     logger.info("Image is generated, uploading to S3 bucket...")
     # Upload to S3
-    s3_client.put_object(
+    response = s3_client.put_object(
         Bucket=bucket,
         Key=parsed.s3_url,
         Body=image,
-        ContentType="image/jpeg",
     )
-    logger.info("Image is uploaded to S3 bucket.")
+    logger.info("Response: %s", response)
+    logger.info("Image is probably uploaded to S3 bucket.")
     return {"statusCode": 200, "body": body}

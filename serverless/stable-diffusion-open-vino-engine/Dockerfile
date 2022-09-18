@@ -14,7 +14,7 @@ RUN apt-get update && \
 COPY requirements.txt /src/
  
 RUN pip3 install -r requirements.txt --target /src/
-COPY handler.py stable_diffusion_engine.py /src/
+COPY handler.py stable_diffusion_engine.py message_types.py /src/
 
 ENTRYPOINT [ "/usr/local/bin/python", "-m", "awslambdaric" ]
 CMD [ "handler.handler" ]

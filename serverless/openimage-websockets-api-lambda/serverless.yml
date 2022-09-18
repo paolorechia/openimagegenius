@@ -159,6 +159,11 @@ functions:
               dynamodb:
                 NewImage:
                   request_status:
+                    S: [lambda_scheduled]
+            - eventName: [MODIFY]
+              dynamodb:
+                NewImage:
+                  request_status:
                     S: [failed]
 
 plugins:
@@ -237,8 +242,13 @@ resources:
       Value:
         Fn::GetAtt: ImageProcessingQueue.Arn
 
+    ImageCPUProcessingQueue:
+      Export:
+        Name: image-cpu-processing-queue-${self:provider.stage}-arn
+      Value:
+        Fn::GetAtt: ImageCPUProcessingQueue.Arn
+
     ImageCPUProcessingQueueURL:
       Export:
         Name: image-cpu-processing-queue-${self:provider.stage}-url
-      Value:
-        !Ref ImageCPUProcessingQueue
+      Value: !Ref ImageCPUProcessingQueue

@@ -83,6 +83,7 @@ provider:
             - "sqs:SendMessage"
           Resource:
             - ${cf:openimagegenius-websockets-api-${self:provider.stage}.ImageProcessingQueue}
+            - ${self:custom.sqsCpuProcessingQueueArn}
 
 functions:
   connectionHandler:
@@ -162,6 +163,7 @@ plugins:
 
 custom:
   generatedImagesBucket: ${cf:openimagegenius-image-buckets-${self:provider.stage}.GeneratedImagesBucket}
+  sqsCpuProcessingQueueArn: ${cf:openimagegenius-websockets-api-${self:provider.stage}.ImageCPUProcessingQueue}
   sqsCpuProcessingQueueUrl: ${cf:openimagegenius-websockets-api-${self:provider.stage}.ImageCPUProcessingQueueURL}
   apiGatewayIdMapping:
     dev: cwo3f8h30b

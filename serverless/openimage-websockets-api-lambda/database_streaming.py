@@ -83,10 +83,10 @@ def update_handler(event, context):
         if user.connection_status == "connected":
             request_id = reader.get("request_id")
             update_time_iso = reader.get("update_time_iso")
-            if request_status == "completed":
+            if request_status == "completed" or request_status == "lambda_scheduled":
                 s3_url = reader.get("s3_url")
                 payload = json.dumps({
-                    "message_type": "job_complete",
+                    "message_type": request_status,
                     "data": {
                         "s3_url": s3_url,
                         "prompt": reader.get("data"),
@@ -102,6 +102,7 @@ def update_handler(event, context):
                         "update_time_iso": update_time_iso
                     }
                 })
+
             else:
                 logger.error("Unrecognized request_status: %s", request_status)
                 break
