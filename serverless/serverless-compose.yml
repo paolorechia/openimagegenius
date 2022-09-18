@@ -8,3 +8,5 @@ services:
     path: openimage-websockets-api-lambda
   openimagegenius-gpu-websockets:
     path: openimage-gpu-websockets-lambda
+  stable-diffusion-open-vino:
+    path: stable-diffusion-open-vino-engine
