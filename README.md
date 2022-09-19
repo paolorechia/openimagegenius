@@ -5,7 +5,7 @@ Ultimately, after about 3 weeks of development, it was realized this is not a go
 
 1. Most people are instead interested in running Stable Diffusion quickly and cheaply.
 2. In the cloud, you cannot do it cheaply and quickly, e.g, you need to over-provision GPU resources which are expensive.
-3. Many people execute it locally, and a wide range of open source repositories have emerged. Anyone that owns a GPU with about 4GB of RAM can use a fork of the stable diffusion web UI to run it locally. 
+3. Many people execute it locally, and a wide range of open source repositories have emerged. Anyone that owns a GPU with about 4GB of RAM can use a fork of the stable diffusion web UI to run it locally. Here's an example repository with tons of features: https://github.com/AUTOMATIC1111/stable-diffusion-webui
 
 This was nonetheless a very interesting project to develop, which provided good experience in many ways.
 
