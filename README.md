@@ -26,7 +26,6 @@ The UI is very raw, and is just a Google OAuth screen:
 It requires you to share your e-mail address.
 
 Generating the first image takes about 3 minutes. The following will take between 1-2 minutes. They will be stored in a public S3 bucket that is behind a CloudFront / and Route 53 subdomain.
-![image](https://user-images.githubusercontent.com/5386983/190959739-9ef15816-0523-4405-b197-a30687c6dcfd.png)
-
+![image](https://user-images.githubusercontent.com/5386983/190960033-3cf449db-4d7f-4ace-bd49-e06115afaaaa.png)
 
 If you think this project is worth continuing or forking, feel free to get in touch :)
