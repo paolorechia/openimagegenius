@@ -18,8 +18,12 @@ custom:
   webAppBucketNameMapping:
     dev: ${self:provider.stage}.app.openimagegenius.com
     prod: app.openimagegenius.com
+  landingPageBucketNameMapping:
+    dev: ${self:provider.stage}.www.openimagegenius.com
+    prod: www.openimagegenius.com
   bucketName: ${self:custom.bucketMapping.${self:provider.stage}}
   webAppBucketName: ${self:custom.webAppBucketNameMapping.${self:provider.stage}}
+  landingPageBucketName: ${self:custom.landingPageBucketNameMapping.${self:provider.stage}}
   s3Sync:
     # An example of possible configuration options
     - bucketName: ${self:custom.bucketName}
@@ -48,6 +52,19 @@ custom:
       bucketTags:
         stage: ${self:provider.stage}
 
+    - bucketName: ${self:custom.landingPageBucketName}
+      localDir: ./landing-page/build-${self:provider.stage}
+      deleteRemoved: true # optional, indicates whether sync deletes files no longer present in localDir. Defaults to 'true'
+      followSymlinks: true # optional
+      defaultContentType: text/html # optional
+      params: # optional
+        - index.html:
+            CacheControl: "no-cache"
+        - "*.js":
+            CacheControl: "public, max-age=31536000"
+      bucketTags:
+        stage: ${self:provider.stage}
+
 resources:
   Resources:
     WebsiteBucket:
@@ -61,5 +78,12 @@ resources:
       Type: AWS::S3::Bucket
       Properties:
         BucketName: ${self:custom.webAppBucketName}
+        WebsiteConfiguration:
+          IndexDocument: index.html
+
+    LandingPageBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.landingPageBucketName}
         WebsiteConfiguration:
           IndexDocument: index.html
