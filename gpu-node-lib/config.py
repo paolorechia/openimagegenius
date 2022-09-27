@@ -39,16 +39,41 @@ class Config:
         self.user_config: UserConfig = self.load_config()
 
     def load_api_token(self, token_filepath) -> str:
+        """
+        Loads the api token from a json file.
+
+        :param token_filepath: The path to the json file containing the api token.
+        :type token_filepath: str
+        :return: The api token.
+        :rtype: str
+        :raises FileNotFoundError: If the file does not exist.
+        :raises KeyError: If the json file does not contain the api token.
+        """
         with open(token_filepath, "r") as fp:
             j = json.load(fp)
         return j["api_token"]
 
     def load_hugging_face_token(self, filepath) -> str:
+        """
+        Load a Hugging Face token from a file.
+
+        :param filepath: The path to the file containing the token.
+        :type filepath: str
+        :raises FileNotFoundError: If the file does not exist.
+        :return: The token.
+        :rtype: str
+        """
         # get your token at https://huggingface.co/settings/tokens
         with open(filepath, "r") as fp:
             return fp.read().strip()
 
+
     def load_config(self) -> UserConfig:
+        """
+        Loads a config file from the config directory.
+        :return: A UserConfig object.
+        :raises KeyError: If the config file is malformed.
+        """
         config_filepath = os.path.join(Config.CONFIG_DIR, Config.CONFIG_FILE)
         try:
             with open(config_filepath, "r") as fp:

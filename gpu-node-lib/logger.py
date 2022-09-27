@@ -5,6 +5,12 @@ logger = None
 
 
 def setup_logger():
+    """
+    This function sets up a logger.
+
+    :return: logger object
+    :rtype: object
+    """
     global logger
     if logger:
         return logger

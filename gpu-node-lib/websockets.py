@@ -46,6 +46,15 @@ class WebsocketsClient:
         }))
 
     async def send_job_failed(self, request_id):
+        """
+        Send a job_failed message to the server.
+
+        :param request_id: The request id of the job that failed.
+        :type request_id: str
+        :return: The response from the server.
+        :rtype: str
+        :raises: :class:`websockets.exceptions.ConnectionClosed`
+        """
         return await self.ws_connection.send(json.dumps({
             "message_type": "job_failed",
             "data": request_id
