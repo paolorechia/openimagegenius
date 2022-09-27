@@ -53,7 +53,7 @@ custom:
         stage: ${self:provider.stage}
 
     - bucketName: ${self:custom.landingPageBucketName}
-      localDir: ./landing-page/build-${self:provider.stage}
+      localDir: ./landing-page
       deleteRemoved: true # optional, indicates whether sync deletes files no longer present in localDir. Defaults to 'true'
       followSymlinks: true # optional
       defaultContentType: text/html # optional
