@@ -16,7 +16,7 @@ https://pacific-drip-6f9.notion.site/Openimagegenius-f5eda2bd24b745a9a38f7124327
 
 ## The Playground
 
-You can also access the playground to use AWS Lambda to generate images (at low quality, currently 12 inference steps):
+You can also access the playground to use AWS Lambda to generate images (at medium quality, currently 32 inference steps):
 
 https://auth.openimagegenius.com/
 
